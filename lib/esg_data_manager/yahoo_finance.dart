@@ -45,7 +45,7 @@ class _ESGDataScreenState extends State<ESGDataScreen> {
     });
 
     try {
-      final response = await http.get(Uri.parse('http://127.0.0.1:8301/tickers'));
+      final response = await http.get(Uri.parse('http://127.0.0.1:8097/tickers'));
 
       if (response.statusCode == 200) {
         List<dynamic> tickers = json.decode(response.body);
@@ -90,7 +90,7 @@ class _ESGDataScreenState extends State<ESGDataScreen> {
       for (String dataId in dataIds) {
         try {
           final response = await http.post(
-            Uri.parse('http://127.0.0.1:8301/tickers/$ticker/data'),
+            Uri.parse('http://127.0.0.1:8097/tickers/$ticker/data'),
             headers: {"Content-Type": "application/json"},
             body: jsonEncode({
               "ticker": ticker,

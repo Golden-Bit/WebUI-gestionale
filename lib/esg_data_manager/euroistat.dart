@@ -52,7 +52,7 @@ class _DataScreenState extends State<DataScreen> {
     });
 
     final String apiUrl =
-        'http://127.0.0.1:8201/dataset/parameters/?dataset_id=nama_10_gdp';
+        'http://127.0.0.1:8096/dataset/parameters/?dataset_id=nama_10_gdp';
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -85,7 +85,7 @@ class _DataScreenState extends State<DataScreen> {
       hasError = false;
     });
 
-    final String apiUrl = 'http://127.0.0.1:8201/generate_data/';
+    final String apiUrl = 'http://127.0.0.1:8096/generate_data/';
     final Map<String, dynamic> requestBody = {
       "dataset_id": 'nama_10_gdp',
       "geo": selectedGeo,
