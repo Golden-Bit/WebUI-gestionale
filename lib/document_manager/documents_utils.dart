@@ -46,7 +46,7 @@ class _DocumentManagerHomePageState extends State<DocumentManagerHomePage> {
 // Metodo per caricare l'albero delle cartelle
 void _loadFolderTree() async {
   try {
-    FolderInfo rootFolder = await FileManagerService("sans5-database_0").fetchFolderTree(widget.token);
+    FolderInfo rootFolder = await FileManagerService("sans7-database_0").fetchFolderTree(widget.token);
     
     if (widget.path == "Root") {
       // Se siamo in root, assegna direttamente la root folder

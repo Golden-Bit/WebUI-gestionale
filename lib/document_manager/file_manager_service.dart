@@ -181,13 +181,13 @@ class DocumentInfo {
 
   // Salva un documento nel database
   Future<Map<String, dynamic>> saveDocument(String token) async {
-  return await FileManagerService("sans5-database_0").saveDocument(this, token);
+  return await FileManagerService("sans7-database_0").saveDocument(this, token);
 }
 
 // Aggiorna un documento esistente nel database
 Future<void> updateDocument(String token) async {
   if (databaseId != null) {
-    await FileManagerService("sans5-database_0").updateDocument(databaseId!, this, token);
+    await FileManagerService("sans7-database_0").updateDocument(databaseId!, this, token);
   } else {
     throw Exception("Document ID non può essere nullo");
   }
@@ -196,7 +196,7 @@ Future<void> updateDocument(String token) async {
 // Elimina un documento dal database
 Future<void> deleteDocument(String token) async {
   if (databaseId != null) {
-    await FileManagerService("sans5-database_0").deleteDocument(databaseId!, token);
+    await FileManagerService("sans7-database_0").deleteDocument(databaseId!, token);
   } else {
     throw Exception("Document ID non può essere nullo");
   }
@@ -355,13 +355,13 @@ class FolderInfo {
 
   // Salva una cartella nel database
 Future<Map<String, dynamic>> saveFolder(String token) async {
-  return await FileManagerService("sans5-database_0").saveFolder(this, token);
+  return await FileManagerService("sans7-database_0").saveFolder(this, token);
 }
 
 // Aggiorna una cartella esistente nel database
 Future<void> updateFolder(String token) async {
   if (databaseId != null) {
-    await FileManagerService("sans5-database_0").updateFolder(databaseId!, this, token);
+    await FileManagerService("sans7-database_0").updateFolder(databaseId!, this, token);
   } else {
     throw Exception("Folder ID non può essere nullo");
   }
@@ -370,7 +370,7 @@ Future<void> updateFolder(String token) async {
 // Elimina una cartella dal database
 Future<void> deleteFolder(String token) async {
   if (databaseId != null) {
-    await FileManagerService("sans5-database_0").deleteFolder(databaseId!, token);
+    await FileManagerService("sans7-database_0").deleteFolder(databaseId!, token);
   } else {
     throw Exception("Folder ID non può essere nullo");
   }
