@@ -158,7 +158,7 @@ class _DatabasePageState extends State<DatabasePage> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Collections in $dbName'),
+              Text('Collections in ${dbName.replaceFirst('${widget.user.username}-', '')}'),
               IconButton(
                 icon: Icon(Icons.close),
                 onPressed: () {
@@ -833,7 +833,7 @@ Widget build(BuildContext context) {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    db.dbName,
+                                    db.dbName.replaceFirst('${widget.user.username}-', ''),
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,

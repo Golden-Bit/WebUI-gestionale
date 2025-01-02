@@ -5,7 +5,7 @@ import 'user_model.dart';
 
 
 class AuthService {
-  final String baseUrl = "http://34.140.110.56:8095";
+  final String baseUrl = "http://35.205.92.199:8095";
 
   Future<void> register(User user, String password) async {
     final userJson = user.toJson();

@@ -41,7 +41,7 @@ class User {
       "full_name": fullName,
       "disabled": disabled,
       "managed_users": managedUsers,
-      "manager_users": managerUsers,
+      "anager_userms": managerUsers,
       "databases": databases.map((db) => db.toJson()).toList(),
     };
   }

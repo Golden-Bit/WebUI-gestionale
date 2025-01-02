@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_app/databases_manager/database_service.dart';
 import 'package:flutter_app/databases_manager/database_model.dart';
+import 'package:flutter_app/user_manager/auth_service.dart';
 
 class FileManagerService {
   final DatabaseService _databaseService;
@@ -180,23 +181,38 @@ class DocumentInfo {
   }
 
   // Salva un documento nel database
-  Future<Map<String, dynamic>> saveDocument(String token) async {
-  return await FileManagerService("sans7-database_0").saveDocument(this, token);
+Future<Map<String, dynamic>> saveDocument(String token, String dbName) async {
+    final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
+  return await FileManagerService(_dbName).saveDocument(this, token);
 }
 
 // Aggiorna un documento esistente nel database
-Future<void> updateDocument(String token) async {
+Future<void> updateDocument(String token, String dbName) async {
+      final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
   if (databaseId != null) {
-    await FileManagerService("sans7-database_0").updateDocument(databaseId!, this, token);
+    await FileManagerService(_dbName).updateDocument(databaseId!, this, token);
   } else {
     throw Exception("Document ID non può essere nullo");
   }
 }
 
 // Elimina un documento dal database
-Future<void> deleteDocument(String token) async {
+Future<void> deleteDocument(String token, String dbName) async {
+  final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
   if (databaseId != null) {
-    await FileManagerService("sans7-database_0").deleteDocument(databaseId!, token);
+    await FileManagerService(_dbName).deleteDocument(databaseId!, token);
   } else {
     throw Exception("Document ID non può essere nullo");
   }
@@ -354,23 +370,38 @@ class FolderInfo {
   int get totalItems => subFolders.length + documents.length;
 
   // Salva una cartella nel database
-Future<Map<String, dynamic>> saveFolder(String token) async {
-  return await FileManagerService("sans7-database_0").saveFolder(this, token);
+Future<Map<String, dynamic>> saveFolder(String token, String dbName) async {
+        final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
+  return await FileManagerService(_dbName).saveFolder(this, token);
 }
 
 // Aggiorna una cartella esistente nel database
-Future<void> updateFolder(String token) async {
+Future<void> updateFolder(String token, String dbName) async {
+          final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
   if (databaseId != null) {
-    await FileManagerService("sans7-database_0").updateFolder(databaseId!, this, token);
+    await FileManagerService(_dbName).updateFolder(databaseId!, this, token);
   } else {
     throw Exception("Folder ID non può essere nullo");
   }
 }
 
 // Elimina una cartella dal database
-Future<void> deleteFolder(String token) async {
+Future<void> deleteFolder(String token, String dbName) async {
+            final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(token);
+  final _dbName = '${user.username}-${dbName}';
   if (databaseId != null) {
-    await FileManagerService("sans7-database_0").deleteFolder(databaseId!, token);
+    await FileManagerService(_dbName).deleteFolder(databaseId!, token);
   } else {
     throw Exception("Folder ID non può essere nullo");
   }

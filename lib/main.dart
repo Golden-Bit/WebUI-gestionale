@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/generic_object_page/generic_object_page.dart';
+import 'package:flutter_app/pages/login/login.dart';
+import 'package:flutter_app/pages/register/register.dart';
+import 'package:flutter_app/pages/settings/settings.dart';
 import 'package:flutter_app/document_manager/documents_utils.dart';
 import 'package:flutter_app/document_manager/file_manager_service.dart';
-import 'user_manager/auth_pages.dart';
+import 'dart:html' as html;  // Importa dart:html per aprire una nuova finestra
+
 import 'user_manager/user_model.dart';
 import 'databases_manager/database_pages.dart';
-import 'calendar.dart';  // Importa il file del calendario
-import 'task_board.dart';  // Importa il TaskBoard
-import 'contacts.dart';  // Importa il ContactManager
-import 'products.dart';  // Importa il ProductManagerPage
-import 'services.dart';  // Importa il ServiceManagerPage
-import 'esg_data_manager/euroistat.dart'; // Importa la pagina di analisi ESG
-import 'esg_data_manager/yahoo_finance.dart'; // Importa la pagina di analisi ESG aziendale
+import 'pages/calendar/calendar.dart';
+import 'pages/task_board/task_board.dart';
+import 'pages/contacts/contacts.dart';
+import 'pages/products/products.dart';
+import 'pages/services/services.dart';
+import 'esg_data_manager/euroistat.dart';
+import 'esg_data_manager/yahoo_finance.dart';
 
 void main() {
   runApp(MyApp());
@@ -33,17 +38,54 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final User user;
   final Token token;
 
   HomePage({required this.user, required this.token});
 
   @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String selectedDatabase = '';
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.user.databases.isNotEmpty) {
+      selectedDatabase = widget.user.databases.first.dbName.replaceFirst('${widget.user.username}-', ''); // Seleziona il primo database come predefinito
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Home'),
+        actions: [
+          DropdownButton<String>(
+            value: selectedDatabase,
+            icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+            dropdownColor: Colors.blueAccent,
+            underline: SizedBox(),
+            items: widget.user.databases.map((db) {
+              return DropdownMenuItem<String>(
+                value: db.dbName.replaceFirst('${widget.user.username}-', ''),
+                child: Text(
+                  db.dbName.replaceFirst('${widget.user.username}-', ''),
+                  style: TextStyle(color: Colors.black),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedDatabase = value!;
+              });
+            },
+          ),
+        ],
       ),
       body: Center(
         child: LayoutBuilder(
@@ -52,7 +94,7 @@ class HomePage extends StatelessWidget {
             return Container(
               width: gridWidth,
               child: GridView.count(
-                crossAxisCount: 3,  // Tre schede per riga
+                crossAxisCount: 3,
                 childAspectRatio: 1,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
@@ -67,7 +109,7 @@ class HomePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              AccountSettingsPage(user: user, token: token),
+                              AccountSettingsPage(user: widget.user, token: widget.token),
                         ),
                       );
                     },
@@ -81,7 +123,7 @@ class HomePage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              DatabasePage(databases: user.databases, token: token.accessToken, user: user),
+                              DatabasePage(databases: widget.user.databases, token: widget.token.accessToken, user: widget.user),
                         ),
                       );
                     },
@@ -94,7 +136,10 @@ class HomePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CalendarComponent(token: token.accessToken),  // Passa il token al CalendarComponent
+                          builder: (context) => CalendarComponent(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
                         ),
                       );
                     },
@@ -107,7 +152,10 @@ class HomePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TaskBoard(token: token.accessToken),  // Passa il token al TaskBoard
+                          builder: (context) => TaskBoard(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
                         ),
                       );
                     },
@@ -120,7 +168,10 @@ class HomePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ContactManagerPage(token: token.accessToken),  // Passa il token al ContactManagerPage
+                          builder: (context) => ContactManagerPage(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
                         ),
                       );
                     },
@@ -133,7 +184,10 @@ class HomePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProductManagerPage(token: token.accessToken),  // Passa il token al ProductManagerPage
+                          builder: (context) => ProductManagerPage(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
                         ),
                       );
                     },
@@ -146,52 +200,82 @@ class HomePage extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ServiceManagerPage(token: token.accessToken),  // Passa il token al ServiceManagerPage
+                          builder: (context) => ServiceManagerPage(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
                         ),
                       );
                     },
                   ),
-                    _buildGridCard(
-    context,
-    icon: Icons.description,  // Icona per i documenti
-    label: 'Gestione Documenti',
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DocumentManagerHomePage(
-            currentFolder: FolderInfo.root(),
-            path: "Root",
-            token: token.accessToken,  // Passa il token al gestore dei documenti
-          ),
-        ),
-      );
-    },
-  ),_buildGridCard(
-   context,
-   icon: Icons.bar_chart,  // Icona per l'analisi ESG
-   label: 'MacroAnalisi ESG',
-   onTap: () {
-     Navigator.push(
-       context,
-       MaterialPageRoute(
-         builder: (context) => DataScreen(),  // Passa il token alla pagina di analisi ESG
-       ),
-     );
-   },
- ),_buildGridCard(
-  context,
-  icon: Icons.bar_chart,  // Icona per l'analisi ESG
-  label: 'Analisi ESG',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ESGDataScreen(),  // Pagina di analisi ESG
-      ),
-    );
-  },
-),
+                  _buildGridCard(
+                    context,
+                    icon: Icons.data_object,
+                    label: 'Gestione Oggetti (Esempio)',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GenericObjectPage(
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildGridCard(
+                    context,
+                    icon: Icons.description,
+                    label: 'Gestione Documenti',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DocumentManagerHomePage(
+                            currentFolder: FolderInfo.root(),
+                            path: "Root",
+                            token: widget.token.accessToken,
+                            dbName: selectedDatabase,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildGridCard(
+                    context,
+                    icon: Icons.bar_chart,
+                    label: 'MacroAnalisi ESG',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DataScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildGridCard(
+                    context,
+                    icon: Icons.bar_chart,
+                    label: 'Analisi ESG',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ESGDataScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildGridCard(
+                    context,
+                    icon: Icons.chat,
+                    label: 'ChatBot',
+                    onTap: () {
+                      html.window.open('http://localhost:59868', '_blank');
+                    },
+                  ),
                 ],
               ),
             );
@@ -201,7 +285,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildGridCard(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _buildGridCard(BuildContext context,
+      {required IconData icon, required String label, required VoidCallback onTap}) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: StatefulBuilder(

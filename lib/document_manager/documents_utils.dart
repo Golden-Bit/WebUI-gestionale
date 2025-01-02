@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_app/user_manager/auth_service.dart';
 import 'dart:typed_data';
 import 'dart:html' as html;
 
@@ -20,11 +21,13 @@ class DocumentManagerHomePage extends StatefulWidget {
   final FolderInfo currentFolder;
   final String path;
   final String token; // Aggiunto per ricevere il token
+  final String dbName; // Aggiunto per ricevere il token
 
   DocumentManagerHomePage({
     required this.currentFolder,
     required this.path,
-    required this.token, // Aggiunto per ricevere il token
+    required this.token,
+    required this.dbName // Aggiunto per ricevere il token
   });
 
   @override
@@ -45,8 +48,13 @@ class _DocumentManagerHomePageState extends State<DocumentManagerHomePage> {
   // Metodo per caricare l'albero delle cartelle
 // Metodo per caricare l'albero delle cartelle
 void _loadFolderTree() async {
+  final authService = AuthService();
+
+  // Ottenere l'utente corrente utilizzando il token
+  final user = await authService.fetchCurrentUser(widget.token);
+  final dbName = '${user.username}-${widget.dbName}';
   try {
-    FolderInfo rootFolder = await FileManagerService("sans7-database_0").fetchFolderTree(widget.token);
+    FolderInfo rootFolder = await FileManagerService(dbName).fetchFolderTree(widget.token);
     
     if (widget.path == "Root") {
       // Se siamo in root, assegna direttamente la root folder
@@ -124,7 +132,7 @@ void _pickFile() async {
           absolutePath: absolutePath, // Salva il percorso assoluto
         );
         
-        final saveDocuemntResponse = await newDocument.saveDocument(widget.token); // Salva nel database
+        final saveDocuemntResponse = await newDocument.saveDocument(widget.token, widget.dbName); // Salva nel database
         newDocument.databaseId = saveDocuemntResponse["id"];
         newDocuments.add(newDocument);
 
@@ -136,7 +144,7 @@ void _pickFile() async {
           existingDocument.bytes = file.bytes!;
           existingDocument.size = file.size;
           existingDocument.lastModifiedDate = DateTime.now();
-          await existingDocument.updateDocument(widget.token); // Aggiorna nel database
+          await existingDocument.updateDocument(widget.token, widget.dbName); // Aggiorna nel database
         } else if (action != null && action.isNotEmpty) {
           var newDocument = DocumentInfo(
             name: action,
@@ -148,7 +156,7 @@ void _pickFile() async {
             documentId: DateTime.now().millisecondsSinceEpoch.toString(), // Genera un ID univoco
             absolutePath: '${widget.path}/$action', // Salva il percorso assoluto aggiornato
           );
-          final saveDocuemntResponse = await newDocument.saveDocument(widget.token); // Salva nel database
+          final saveDocuemntResponse = await newDocument.saveDocument(widget.token, widget.dbName); // Salva nel database
           newDocument.databaseId = saveDocuemntResponse["id"];
           newDocuments.add(newDocument);
         }
@@ -232,7 +240,7 @@ void _copyItem(int index, bool isFolder) async {
           newFolder.setParent(destinationFolder);
 
           // Salva la nuova cartella nel database
-          final saveFolderResponse = await newFolder.saveFolder(widget.token);
+          final saveFolderResponse = await newFolder.saveFolder(widget.token, widget.dbName);
           newFolder.databaseId = saveFolderResponse["id"];
 
           setState(() {
@@ -244,7 +252,7 @@ void _copyItem(int index, bool isFolder) async {
             setState(() {
               existingFolder.lastModifiedDate = DateTime.now();
             });
-            await existingFolder.updateFolder(widget.token);  // Aggiorna nel database
+            await existingFolder.updateFolder(widget.token, widget.dbName);  // Aggiorna nel database
           } else if (action != null && action.isNotEmpty) {
             FolderInfo newFolder = FolderInfo(
               name: action,
@@ -255,7 +263,7 @@ void _copyItem(int index, bool isFolder) async {
             );
 
             // Salva la nuova cartella nel database
-            final saveFolderResponse = await newFolder.saveFolder(widget.token);
+            final saveFolderResponse = await newFolder.saveFolder(widget.token, widget.dbName);
             newFolder.databaseId = saveFolderResponse["id"];
 
             setState(() {
@@ -282,7 +290,7 @@ void _copyItem(int index, bool isFolder) async {
           newDocument.lastModifiedDate = DateTime.now();
 
           // Salva il nuovo documento nel database
-          final saveDocumentResponse = await newDocument.saveDocument(widget.token);
+          final saveDocumentResponse = await newDocument.saveDocument(widget.token, widget.dbName);
           newDocument.databaseId = saveDocumentResponse["id"];
 
           setState(() {
@@ -296,7 +304,7 @@ void _copyItem(int index, bool isFolder) async {
               existingDocument.size = document.size;
               existingDocument.lastModifiedDate = DateTime.now();
             });
-            await existingDocument.updateDocument(widget.token);  // Aggiorna nel database
+            await existingDocument.updateDocument(widget.token, widget.dbName);  // Aggiorna nel database
           } else if (action != null && action.isNotEmpty) {
             DocumentInfo newDocument = DocumentInfo(
               name: action,
@@ -309,7 +317,7 @@ void _copyItem(int index, bool isFolder) async {
             );
 
             // Salva il nuovo documento nel database
-            final saveDocumentResponse = await newDocument.saveDocument(widget.token);
+            final saveDocumentResponse = await newDocument.saveDocument(widget.token, widget.dbName);
             newDocument.databaseId = saveDocumentResponse["id"];
 
             setState(() {
@@ -425,7 +433,7 @@ void _createFolder() async {
         absolutePath: absolutePath, // Salva il percorso assoluto
       );
       
-      final saveFolderResponse = await newFolder.saveFolder(widget.token); // Salva nel database
+      final saveFolderResponse = await newFolder.saveFolder(widget.token, widget.dbName); // Salva nel database
       newFolder.databaseId = saveFolderResponse["id"];
 
       setState(() {
@@ -439,7 +447,7 @@ void _createFolder() async {
         setState(() {
           existingFolder.lastModifiedDate = DateTime.now();
         });
-        await existingFolder.updateFolder(widget.token); // Aggiorna nel database
+        await existingFolder.updateFolder(widget.token, widget.dbName); // Aggiorna nel database
       } else if (action != null && action.isNotEmpty) {
         FolderInfo newFolder = FolderInfo(
           name: action,
@@ -448,7 +456,7 @@ void _createFolder() async {
           folderId: DateTime.now().millisecondsSinceEpoch.toString(), // Genera un ID univoco
           absolutePath: '${widget.path}/$action', // Salva il percorso assoluto aggiornato
         );
-        await newFolder.saveFolder(widget.token); // Salva nel database
+        await newFolder.saveFolder(widget.token, widget.dbName); // Salva nel database
 
         setState(() {
           widget.currentFolder.addFolder(newFolder);
@@ -525,7 +533,7 @@ void _moveItem(int index, bool isFolder) async {
           destinationFolder.addFolder(folder);
 
           // Aggiorna il database
-          await folder.updateFolder(widget.token);
+          await folder.updateFolder(widget.token, widget.dbName);
         } else {
           String? action = await _askOverwriteOrRenameFolder(folder.name);
           if (action == 'Sovrascrivi') {
@@ -533,7 +541,7 @@ void _moveItem(int index, bool isFolder) async {
               widget.currentFolder.subFolders.removeAt(index);
               existingFolder.lastModifiedDate = DateTime.now();
             });
-            await existingFolder.updateFolder(widget.token);  // Aggiorna il database
+            await existingFolder.updateFolder(widget.token, widget.dbName);  // Aggiorna il database
           } else if (action != null && action.isNotEmpty) {
             FolderInfo newFolder = FolderInfo(
               name: action,
@@ -547,7 +555,7 @@ void _moveItem(int index, bool isFolder) async {
               widget.currentFolder.subFolders.removeAt(index);
               destinationFolder.addFolder(newFolder);
             });
-            await newFolder.saveFolder(widget.token);  // Salva nel database
+            await newFolder.saveFolder(widget.token, widget.dbName);  // Salva nel database
           }
         }
       } else {
@@ -568,7 +576,7 @@ void _moveItem(int index, bool isFolder) async {
           destinationFolder.addDocuments([document]);
 
           // Aggiorna il database
-          await document.updateDocument(widget.token);
+          await document.updateDocument(widget.token, widget.dbName);
         } else {
           String? action = await _askOverwriteOrRename(document.name);
           if (action == 'Sovrascrivi') {
@@ -578,7 +586,7 @@ void _moveItem(int index, bool isFolder) async {
               existingDocument.size = document.size;
               existingDocument.lastModifiedDate = DateTime.now();
             });
-            await existingDocument.updateDocument(widget.token);  // Aggiorna nel database
+            await existingDocument.updateDocument(widget.token, widget.dbName);  // Aggiorna nel database
           } else if (action != null && action.isNotEmpty) {
             DocumentInfo newDocument = DocumentInfo(
               name: action,
@@ -594,7 +602,7 @@ void _moveItem(int index, bool isFolder) async {
               widget.currentFolder.documents.removeAt(index);
               destinationFolder.addDocuments([newDocument]);
             });
-            await newDocument.saveDocument(widget.token);  // Salva nel database
+            await newDocument.saveDocument(widget.token, widget.dbName);  // Salva nel database
           }
         }
       }
@@ -722,7 +730,7 @@ void _deleteFolder(int index) async {
 
   try {
     // Elimina la cartella dal database
-    await folder.deleteFolder(widget.token);
+    await folder.deleteFolder(widget.token, widget.dbName);
 
     // Aggiorna la UI rimuovendo la cartella
     setState(() {
@@ -746,7 +754,7 @@ void _editFolder(int index) async {
 
     try {
       // Aggiorna la cartella nel database
-      await folder.updateFolder(widget.token);
+      await folder.updateFolder(widget.token, widget.dbName);
 
       // Aggiorna la UI
       setState(() {});
@@ -764,7 +772,7 @@ void _deleteFile(int index) async {
 
   try {
     // Elimina il documento dal database
-    await document.deleteDocument(widget.token);
+    await document.deleteDocument(widget.token, widget.dbName);
 
     // Aggiorna la UI rimuovendo il documento
     setState(() {
@@ -787,7 +795,7 @@ void _editFile(int index) async {
     document.lastModifiedDate = DateTime.now();
   try {
       // Aggiorna il documento nel database
-      await document.updateDocument(widget.token);
+      await document.updateDocument(widget.token, widget.dbName);
 
       // Aggiorna la UI
       setState(() {});
@@ -876,6 +884,7 @@ void _openFolder(FolderInfo folder) {
         currentFolder: folder,
         path: '${folder.absolutePath}', // Usa il percorso assoluto della cartella
         token: widget.token,
+        dbName: widget.dbName
       ),
     ),
   ).then((_) {
