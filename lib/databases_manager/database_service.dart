@@ -142,6 +142,8 @@ class DatabaseService {
   Future<void> updateCollectionData(String dbName, String collectionName, String itemId, Map<String, dynamic> data, String token) async {
     final url = Uri.parse("$baseUrl/mongo/$dbName/update_item/$collectionName/$itemId");
 
+    data.remove('_id');
+    
     final response = await http.put(
       url,
       headers: {

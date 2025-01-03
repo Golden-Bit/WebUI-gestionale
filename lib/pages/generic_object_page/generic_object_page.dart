@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/generic_object_page/components/object_card.dart';
-import 'package:flutter_app/pages/generic_object_page/components/object_class.dart';
+import '../../pages/generic_object_page/components/object_card.dart';
+import '../../pages/generic_object_page/components/object_class.dart';
 import '../../databases_manager/database_service.dart';
 import '../../user_manager/auth_service.dart';
 import '../../pages/generic_object_page/components/object_form.dart';
 import '../../pages/generic_object_page/components/object_viewer.dart';
+import '../../pages/generic_object_page/components/filters_widget.dart';
+import '../../pages/generic_object_page/components/form_config.dart';
 
 class GenericObjectPage extends StatefulWidget {
   final String token;
@@ -19,7 +21,6 @@ class GenericObjectPage extends StatefulWidget {
 class _GenericObjectPageState extends State<GenericObjectPage> {
   List<GenericObject> objects = [];
   List<GenericObject> filteredObjects = [];
-  String searchQuery = '';
   Map<String, String> filters = {};
   final String collectionName = 'generic_objects';
 
@@ -66,7 +67,15 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
       );
 
       setState(() {
-        objects = objectsData.map((json) => GenericObject.fromJson(json)).toList();
+        objects = objectsData.map((json) {
+          final genericObject = GenericObject.fromJson(json);
+          final attributes = {
+            'Nome': genericObject.getAttribute('Nome') ?? '',
+            'Descrizione': genericObject.getAttribute('Descrizione') ?? '',
+            ...genericObject.attributes,
+          };
+          return GenericObject(id: genericObject.id, attributes: attributes);
+        }).toList();
         _applyFilters();
       });
     } catch (e) {
@@ -82,11 +91,15 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
       final user = await authService.fetchCurrentUser(widget.token);
       final dbName = '${user.username}-${widget.dbName}';
 
-      if (object.id.isEmpty) {
+      if (object.id == null || object.id == "") {
+        
+        var json_object = object.toJson();
+        json_object.remove('_id');
+
         final response = await databaseService.addDataToCollection(
           dbName,
           collectionName,
-          object.toJson(),
+          json_object,
           widget.token,
         );
         final newId = response['id'];
@@ -100,7 +113,7 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
         await databaseService.updateCollectionData(
           dbName,
           collectionName,
-          object.id,
+          object.id!,
           object.toJson(),
           widget.token,
         );
@@ -129,7 +142,7 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
       await databaseService.deleteCollectionData(
         dbName,
         collectionName,
-        object.id,
+        object.id!,
         widget.token,
       );
 
@@ -143,27 +156,33 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
   }
 
   void _duplicateObject(GenericObject object) {
-    final duplicatedObject = object.copyWith(
-      id: '',
-      name: '${object.name} (Duplicato)',
-    );
+    final duplicatedObject = object.copyWith(id: "");
+    
+    print('${duplicatedObject.toJson()}');
+
     _saveObjectToDatabase(duplicatedObject);
   }
 
   void _applyFilters() {
     setState(() {
       filteredObjects = objects.where((object) {
-        final matchesQuery = object.name.toLowerCase().contains(searchQuery.toLowerCase());
-        final matchesFilters = filters.entries.every((entry) {
+        return filters.entries.every((entry) {
           final field = entry.key;
           final value = entry.value.toLowerCase();
-          if (field == 'description') {
-            return object.description.toLowerCase().contains(value);
+          final attributeValue = object.getAttribute(field)?.toString().toLowerCase();
+          if (attributeValue != null) {
+            return attributeValue.contains(value);
           }
-          return true;
+          return false;
         });
-        return matchesQuery && matchesFilters;
       }).toList();
+    });
+  }
+
+  void _onFilterChanged(String field, String value) {
+    setState(() {
+      filters[field] = value;
+      _applyFilters();
     });
   }
 
@@ -205,32 +224,10 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Cerca per nome',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                  _applyFilters();
-                });
-              },
-            ),
-            SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Filtra per descrizione',
-                prefixIcon: Icon(Icons.filter_alt),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  filters['description'] = value;
-                  _applyFilters();
-                });
-              },
+            FiltersWidget(
+              formConfig: formConfig,
+              filters: filters,
+              onFilterChanged: _onFilterChanged,
             ),
             Expanded(
               child: ListView.builder(
