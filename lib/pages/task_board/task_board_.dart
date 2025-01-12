@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/add_task.dart';
-import 'package:flutter_app/pages/task_board/components/task_board_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_column.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../databases_manager/database_service.dart';
 import '../../user_manager/auth_service.dart';
-import 'package:uuid/uuid.dart';
 
 
 class TaskBoard extends StatefulWidget {
@@ -20,9 +18,7 @@ class TaskBoard extends StatefulWidget {
 }
 class _TaskBoardState extends State<TaskBoard> {
   List<TaskColumnData> taskColumns = [];
-List<Board> boards = []; // Lista di board esistenti
-Board? currentBoard; // Board attualmente selezionata
-String currentBoardId = 'my_board';
+  String currentBoardId = 'my_board'; // Board attuale
 
   List<Label> labels = [];
   List<Member> members = [
@@ -53,7 +49,6 @@ String currentBoardId = 'my_board';
   void initState() {
     super.initState();
     _loadTasksFromDatabase();
-    _loadBoardsFromDatabase(); // Carica le board
   }
 
 Future<void> _loadTasksFromDatabase() async {
@@ -320,100 +315,6 @@ void _moveTask(Task task, String newListId, int newIndex) {
     _updateTaskInDatabase(task);  // Aggiorna il task nel database
   });
 }
-void _showCreateBoardDialog() {
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Create New Board'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Board Name'),
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Board Description'),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              final name = _nameController.text;
-              final description = _descriptionController.text;
-
-              if (name.isNotEmpty) {
-                final newBoardId = Uuid().v4(); // Genera un ID univoco per la board
-                final newBoard = Board(
-                  id: newBoardId,
-                  name: name,
-                  description: description,
-                );
-
-                final databaseService = DatabaseService();
-                final user = await AuthService().fetchCurrentUser(widget.token);
-                final dbName = '${user.username}-${widget.dbName}';
-
-                // Assicurati di includere esplicitamente l'ID nel JSON durante il salvataggio
-                await databaseService.addDataToCollection(
-                  dbName,
-                  'boards',
-                  newBoard.toJson(), // Questo include l'ID della board
-                  widget.token,
-                );
-
-                setState(() {
-                  boards.add(newBoard);
-                  currentBoard = newBoard; // Seleziona la board appena creata
-                  currentBoardId = newBoard.id;
-                  taskColumns.clear(); // Pulisci le colonne
-                });
-
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
-Future<void> _loadBoardsFromDatabase() async {
-  try {
-    final databaseService = DatabaseService();
-    final user = await AuthService().fetchCurrentUser(widget.token);
-    final dbName = '${user.username}-${widget.dbName}';
-
-    // Carica le board dal database
-    final boardsData = await databaseService.fetchCollectionData(
-      dbName,
-      'boards',
-      widget.token,
-    );
-
-    setState(() {
-      boards = boardsData.map<Board>((boardJson) => Board.fromJson(boardJson)).toList();
-
-      // Seleziona la prima board come predefinita se non c'è nessuna selezionata
-      if (currentBoard == null && boards.isNotEmpty) {
-        currentBoard = boards.first;
-        currentBoardId = currentBoard!.id; // Aggiorna il currentBoardId
-        _loadTasksFromDatabase(); // Ricarica le taskLists per la board selezionata
-      }
-    });
-  } catch (e) {
-    print("Errore durante il caricamento delle board: $e");
-  }
-}
 
  void _showAddTaskColumnDialog(BuildContext context) {
   final _titleController = TextEditingController();
@@ -668,45 +569,21 @@ Future<void> _loadBoardsFromDatabase() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: DropdownButton<Board>(
-    value: currentBoard,
-    hint: const Text('Select a Board', style: TextStyle(color: Colors.white)),
-    dropdownColor: Colors.grey[800],
-    items: boards.map((board) {
-      return DropdownMenuItem<Board>(
-        value: board,
-        child: Text(
-          board.name,
-          style: const TextStyle(color: Colors.white),
-        ),
-      );
-    }).toList(),
-    onChanged: (Board? selectedBoard) {
-      setState(() {
-        currentBoard = selectedBoard;
-        if (currentBoard != null) {
-          currentBoardId = currentBoard!.id; // Aggiorna la board selezionata
-          _loadTasksFromDatabase(); // Ricarica le task list della nuova board
-        }
-      });
-    },
-  ),
-  actions: [
-    ElevatedButton.icon(
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text('Create Board', style: TextStyle(color: Colors.white)),
-      onPressed: _showCreateBoardDialog, // Chiama la funzione per creare una board
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
-    ),
-    ElevatedButton.icon(
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text('Crea Task List', style: TextStyle(color: Colors.white)),
-      onPressed: () => _showAddTaskColumnDialog(context),
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
-    ),
-  ],
-),
-
+        title: Text('Task Board'),
+        actions: [
+          ElevatedButton.icon(
+            icon: Icon(Icons.add, color: Colors.grey[800]),
+            label: Text(
+              'Crea Task List',
+              style: TextStyle(color: Colors.grey[800]),
+            ),
+            onPressed: () => _showAddTaskColumnDialog(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[300],
+            ),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
