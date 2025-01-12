@@ -163,21 +163,56 @@ class _GenericObjectPageState extends State<GenericObjectPage> {
     _saveObjectToDatabase(duplicatedObject);
   }
 
-  void _applyFilters() {
-    setState(() {
-      filteredObjects = objects.where((object) {
-        return filters.entries.every((entry) {
-          final field = entry.key;
-          final value = entry.value.toLowerCase();
-          final attributeValue = object.getAttribute(field)?.toString().toLowerCase();
+void _applyFilters() {
+  setState(() {
+    filteredObjects = objects.where((object) {
+      return filters.entries.every((entry) {
+        final field = entry.key;
+        final value = entry.value;
+
+        // Filtri numerici
+        if (field.endsWith('_min') || field.endsWith('_max')) {
+          final baseField = field.replaceAll('_min', '').replaceAll('_max', '');
+          final attributeValue = double.tryParse(object.getAttribute(baseField)?.toString() ?? '');
           if (attributeValue != null) {
-            return attributeValue.contains(value);
+            if (field.endsWith('_min') && value.isNotEmpty) {
+              return attributeValue >= double.parse(value);
+            }
+            if (field.endsWith('_max') && value.isNotEmpty) {
+              return attributeValue <= double.parse(value);
+            }
           }
-          return false;
-        });
-      }).toList();
-    });
-  }
+          return true;
+        }
+
+        // Filtri date
+        if (field.endsWith('_start') || field.endsWith('_end')) {
+          final baseField = field.replaceAll('_start', '').replaceAll('_end', '');
+          final attributeValue = DateTime.tryParse(object.getAttribute(baseField)?.toString() ?? '');
+          if (attributeValue != null) {
+            if (field.endsWith('_start') && value.isNotEmpty) {
+              return attributeValue.isAfter(DateTime.parse(value)) || 
+                     attributeValue.isAtSameMomentAs(DateTime.parse(value));
+            }
+            if (field.endsWith('_end') && value.isNotEmpty) {
+              return attributeValue.isBefore(DateTime.parse(value)) || 
+                     attributeValue.isAtSameMomentAs(DateTime.parse(value));
+            }
+          }
+          return true;
+        }
+
+        // Filtri testuali
+        final attributeValue = object.getAttribute(field)?.toString().toLowerCase();
+        if (attributeValue != null) {
+          return attributeValue.contains(value.toLowerCase());
+        }
+        return false;
+      });
+    }).toList();
+  });
+}
+
 
   void _onFilterChanged(String field, String value) {
     setState(() {
