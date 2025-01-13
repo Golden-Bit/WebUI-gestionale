@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
-import 'package:flutter_app/pages/task_board/task_board_.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 

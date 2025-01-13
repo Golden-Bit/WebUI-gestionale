@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
-import 'package:flutter_app/pages/task_board/task_board_.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 

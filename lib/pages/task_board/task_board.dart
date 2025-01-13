@@ -23,6 +23,7 @@ class _TaskBoardState extends State<TaskBoard> {
 List<Board> boards = []; // Lista di board esistenti
 Board? currentBoard; // Board attualmente selezionata
 String currentBoardId = 'my_board';
+bool _isMenuOpen = false; // Indica se il menu laterale è aperto
 
   List<Label> labels = [];
   List<Member> members = [
@@ -667,70 +668,223 @@ Future<void> _loadBoardsFromDatabase() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-  title: DropdownButton<Board>(
-    value: currentBoard,
-    hint: const Text('Select a Board', style: TextStyle(color: Colors.white)),
-    dropdownColor: Colors.grey[800],
-    items: boards.map((board) {
-      return DropdownMenuItem<Board>(
-        value: board,
-        child: Text(
-          board.name,
-          style: const TextStyle(color: Colors.white),
-        ),
-      );
-    }).toList(),
-    onChanged: (Board? selectedBoard) {
-      setState(() {
-        currentBoard = selectedBoard;
-        if (currentBoard != null) {
-          currentBoardId = currentBoard!.id; // Aggiorna la board selezionata
-          _loadTasksFromDatabase(); // Ricarica le task list della nuova board
-        }
-      });
-    },
+appBar: AppBar(
+  elevation: 6, // Aggiunge l'elevazione per l'ombreggiatura
+  backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
+  shadowColor: Colors.black26, // Colore dell'ombra
+  leadingWidth: 100, // Imposta la larghezza del lato sinistro per evitare sovrapposizioni
+  leading: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black), // Freccia indietro nera
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      IconButton(
+        icon: const Icon(Icons.menu, color: Colors.black), // Simbolo dell'hamburger nero
+        onPressed: () {
+          setState(() {
+            _isMenuOpen = !_isMenuOpen; // Mostra/nascondi il menu laterale
+          });
+        },
+      ),
+    ],
   ),
+  title: const Text(
+    'Task Board',
+    style: TextStyle(color: Colors.black), // Testo nero
+  ),
+  centerTitle: false, // Mantiene il titolo allineato a sinistra
   actions: [
-    ElevatedButton.icon(
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text('Create Board', style: TextStyle(color: Colors.white)),
-      onPressed: _showCreateBoardDialog, // Chiama la funzione per creare una board
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'Create Board',
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: _showCreateBoardDialog, // Chiama la funzione per creare una board
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+      ),
     ),
-    ElevatedButton.icon(
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text('Crea Task List', style: TextStyle(color: Colors.white)),
-      onPressed: () => _showAddTaskColumnDialog(context),
-      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'Crea Task List',
+          style: TextStyle(color: Colors.white),
+        ),
+        onPressed: () => _showAddTaskColumnDialog(context),
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+      ),
     ),
   ],
 ),
 
-      body: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: taskColumns.map((column) {
-            return Container(
-  width: 300,
-  child: TaskColumn(
-    id: column.id,
-    title: column.title,
-    tasks: column.tasks,
-    onMoveTask: _moveTask,
-    onAddTask: () => _navigateToAddTaskPage(context, column.id),  // Passa l'ID della colonna
-    onRemoveTask: _removeTask,
-    onTaskTap: _showTaskDetails,
-    onDuplicateTask: _duplicateTask,
-    onRemoveColumn: _removeTaskColumn,
-    onDuplicateColumn: _duplicateTaskColumn,
-    onEditTask: (task) => _navigateToAddTaskPage(context, column.id, task: task), // Passa l'ID della colonna
-  ),
-);
-          }).toList(),
+body: Container(
+  color: Colors.white, // Sfondo bianco per la pagina principale
+  child: Row(
+    children: [
+      // Menu laterale
+      if (_isMenuOpen)
+        Material(
+          elevation: 6, // Elevazione per aggiungere ombra
+          child: Container(
+            width: 300,
+            color: Colors.white, // Sfondo bianco per il menu
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sezione: "Bacheche"
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Bacheche',
+                    style: TextStyle(
+                      color: Colors.black, // Testo nero
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const Divider(color: Colors.black45), // Separatore scuro
+
+                // Sezione: "Viste dello spazio di lavoro"
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    'Viste dello spazio di lavoro',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.table_chart, color: Colors.black),
+                  title: Text('Tabella', style: TextStyle(color: Colors.black)),
+                  onTap: () {
+                    // Logica per Tabella
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.calendar_today, color: Colors.black),
+                  title: Text('Calendario', style: TextStyle(color: Colors.black)),
+                  onTap: () {
+                    // Logica per Calendario
+                  },
+                ),
+                const Divider(color: Colors.black45), // Separatore scuro
+
+                // Sezione: "Le tue bacheche"
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Le tue bacheche',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.add, color: Colors.black),
+                        onPressed: _showCreateBoardDialog,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Lista delle bacheche
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: boards.length,
+                    itemBuilder: (context, index) {
+                      final board = boards[index];
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            currentBoard = board;
+                            currentBoardId = board.id;
+                            taskColumns.clear();
+                            _loadTasksFromDatabase();
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8.0),
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: currentBoard?.id == board.id
+                                ? Colors.grey[700]
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Text(
+                            board.name,
+                            style: TextStyle(
+                              color: currentBoard?.id == board.id
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
+
+      // Contenuto principale
+      Expanded(
+        child: taskColumns.isNotEmpty
+            ? SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: taskColumns.map((column) {
+                    return Container(
+                      width: 300,
+                      child: TaskColumn(
+                        id: column.id,
+                        title: column.title,
+                        tasks: column.tasks,
+                        onMoveTask: _moveTask,
+                        onAddTask: () =>
+                            _navigateToAddTaskPage(context, column.id),
+                        onRemoveTask: _removeTask,
+                        onTaskTap: _showTaskDetails,
+                        onDuplicateTask: _duplicateTask,
+                        onRemoveColumn: _removeTaskColumn,
+                        onDuplicateColumn: _duplicateTaskColumn,
+                        onEditTask: (task) =>
+                            _navigateToAddTaskPage(context, column.id, task: task),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              )
+            : Center(
+                child: Text(
+                  'Nessuna lista di task trovata per questa bacheca.',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                ),
+              ),
       ),
+    ],
+  ),
+),
+
     );
   }
 }
