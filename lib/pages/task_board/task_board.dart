@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/add_task.dart';
+import 'package:flutter_app/pages/task_board/components/task_board_app_bar.dart';
+import 'package:flutter_app/pages/task_board/components/task_board_body.dart';
 import 'package:flutter_app/pages/task_board/components/task_board_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_column.dart';
@@ -8,22 +10,24 @@ import '../../databases_manager/database_service.dart';
 import '../../user_manager/auth_service.dart';
 import 'package:uuid/uuid.dart';
 
-
 class TaskBoard extends StatefulWidget {
   final String token;
   final String dbName;
 
-  TaskBoard({required this.token,required this.dbName});  // Accetta il token come parametro
+  TaskBoard(
+      {required this.token,
+      required this.dbName}); // Accetta il token come parametro
 
   @override
   _TaskBoardState createState() => _TaskBoardState();
 }
+
 class _TaskBoardState extends State<TaskBoard> {
   List<TaskColumnData> taskColumns = [];
-List<Board> boards = []; // Lista di board esistenti
-Board? currentBoard; // Board attualmente selezionata
-String currentBoardId = 'my_board';
-bool _isMenuOpen = false; // Indica se il menu laterale è aperto
+  List<Board> boards = []; // Lista di board esistenti
+  Board? currentBoard; // Board attualmente selezionata
+  String currentBoardId = 'my_board';
+  bool _isMenuOpen = false; // Indica se il menu laterale è aperto
 
   List<Label> labels = [];
   List<Member> members = [
@@ -49,7 +53,7 @@ bool _isMenuOpen = false; // Indica se il menu laterale è aperto
     );
   }
 
- // Caricare i task dal database durante l'inizializzazione
+  // Caricare i task dal database durante l'inizializzazione
   @override
   void initState() {
     super.initState();
@@ -57,89 +61,93 @@ bool _isMenuOpen = false; // Indica se il menu laterale è aperto
     _loadBoardsFromDatabase(); // Carica le board
   }
 
-Future<void> _loadTasksFromDatabase() async {
-  try {
-    final databaseService = DatabaseService();
-    final authService = AuthService();
+  Future<void> _loadTasksFromDatabase() async {
+    try {
+      final databaseService = DatabaseService();
+      final authService = AuthService();
 
-    // Ottenere l'utente corrente utilizzando il token
-    final user = await authService.fetchCurrentUser(widget.token);
-    final dbName = '${user.username}-${widget.dbName}';
+      // Ottenere l'utente corrente utilizzando il token
+      final user = await authService.fetchCurrentUser(widget.token);
+      final dbName = '${user.username}-${widget.dbName}';
 
-    // Carica le liste dal database, filtrando per boardId
-    final listsData = await databaseService.fetchCollectionData(dbName, 'taskLists', widget.token);
+      // Carica le liste dal database, filtrando per boardId
+      final listsData = await databaseService.fetchCollectionData(
+          dbName, 'taskLists', widget.token);
 
-    setState(() {
-      // Pulisci le colonne esistenti
-      taskColumns.clear();
+      setState(() {
+        // Pulisci le colonne esistenti
+        taskColumns.clear();
 
-      // Filtra le liste per boardId e aggiungile alla board
-      for (var listJson in listsData) {
-        if (listJson['boardId'] == currentBoardId) {
-          final taskColumn = TaskColumnData.fromJson(listJson);
-          taskColumns.add(taskColumn);
-        }
-      }
-    });
-
-    // Ora carica i task e assegnali alle colonne corrette
-    final tasksData = await databaseService.fetchCollectionData(dbName, 'tasks', widget.token);
-
-    setState(() {
-      for (var taskJson in tasksData) {
-        final task = Task.fromJson(taskJson);
-        for (var column in taskColumns) {
-          if (column.id == task.list) {
-            column.tasks.add(task);
-            break;
+        // Filtra le liste per boardId e aggiungile alla board
+        for (var listJson in listsData) {
+          if (listJson['boardId'] == currentBoardId) {
+            final taskColumn = TaskColumnData.fromJson(listJson);
+            taskColumns.add(taskColumn);
           }
         }
-      }
-    });
-  } catch (e) {
-    print("Errore durante il caricamento dei task: $e");
-  }
-}
-
-
-Future<void> _saveTaskColumnToDatabase(TaskColumnData column) async {
-  try {
-    final databaseService = DatabaseService();
-    final authService = AuthService();
-
-    final user = await authService.fetchCurrentUser(widget.token);
-    final dbName = '${user.username}-${widget.dbName}';
-
-    // Aggiorna il valore di boardId per la colonna
-    column.boardId = currentBoardId;
-
-    if (column.databaseId != null) {
-      await databaseService.updateCollectionData(dbName, 'taskLists', column.databaseId!, column.toJson(), widget.token);
-    } else {
-      final newDatabaseId = (await databaseService.addDataToCollection(dbName, 'taskLists', column.toJson(), widget.token))["id"];
-      setState(() {
-        column.databaseId = newDatabaseId;
       });
+
+      // Ora carica i task e assegnali alle colonne corrette
+      final tasksData = await databaseService.fetchCollectionData(
+          dbName, 'tasks', widget.token);
+
+      setState(() {
+        for (var taskJson in tasksData) {
+          final task = Task.fromJson(taskJson);
+          for (var column in taskColumns) {
+            if (column.id == task.list) {
+              column.tasks.add(task);
+              break;
+            }
+          }
+        }
+      });
+    } catch (e) {
+      print("Errore durante il caricamento dei task: $e");
     }
-  } catch (e) {
-    print("Errore durante il salvataggio della lista: $e");
   }
-}
 
-Future<void> _saveTaskToDatabase(Task task) async {
-  try {
-    final databaseService = DatabaseService();
-    final authService = AuthService();
+  Future<void> _saveTaskColumnToDatabase(TaskColumnData column) async {
+    try {
+      final databaseService = DatabaseService();
+      final authService = AuthService();
 
-    final user = await authService.fetchCurrentUser(widget.token);
-    final dbName = '${user.username}-${widget.dbName}';
-    final collectionName = 'tasks';
+      final user = await authService.fetchCurrentUser(widget.token);
+      final dbName = '${user.username}-${widget.dbName}';
 
-    await databaseService.addDataToCollection(dbName, collectionName, task.toJson(), widget.token);
-  } catch (e) {
-    print("Errore durante il salvataggio del task: $e");
+      // Aggiorna il valore di boardId per la colonna
+      column.boardId = currentBoardId;
+
+      if (column.databaseId != null) {
+        await databaseService.updateCollectionData(dbName, 'taskLists',
+            column.databaseId!, column.toJson(), widget.token);
+      } else {
+        final newDatabaseId = (await databaseService.addDataToCollection(
+            dbName, 'taskLists', column.toJson(), widget.token))["id"];
+        setState(() {
+          column.databaseId = newDatabaseId;
+        });
+      }
+    } catch (e) {
+      print("Errore durante il salvataggio della lista: $e");
+    }
   }
-}
+
+  Future<void> _saveTaskToDatabase(Task task) async {
+    try {
+      final databaseService = DatabaseService();
+      final authService = AuthService();
+
+      final user = await authService.fetchCurrentUser(widget.token);
+      final dbName = '${user.username}-${widget.dbName}';
+      final collectionName = 'tasks';
+
+      await databaseService.addDataToCollection(
+          dbName, collectionName, task.toJson(), widget.token);
+    } catch (e) {
+      print("Errore durante il salvataggio del task: $e");
+    }
+  }
 
   Future<void> _updateTaskInDatabase(Task task) async {
     try {
@@ -151,8 +159,10 @@ Future<void> _saveTaskToDatabase(Task task) async {
       final collectionName = 'tasks';
 
       if (task.databaseId != null) {
-      await databaseService.updateCollectionData(dbName, collectionName, task.databaseId!, task.toJson(), widget.token);
-      } else {        print("Errore: ID del documento MongoDB non disponibile.");
+        await databaseService.updateCollectionData(dbName, collectionName,
+            task.databaseId!, task.toJson(), widget.token);
+      } else {
+        print("Errore: ID del documento MongoDB non disponibile.");
       }
     } catch (e) {
       print("Errore durante l'aggiornamento del task: $e");
@@ -169,7 +179,8 @@ Future<void> _saveTaskToDatabase(Task task) async {
       final collectionName = 'tasks';
 
       if (task.databaseId != null) {
-        await databaseService.deleteCollectionData(dbName, collectionName, task.databaseId!, widget.token);
+        await databaseService.deleteCollectionData(
+            dbName, collectionName, task.databaseId!, widget.token);
       } else {
         print("Errore: ID del documento MongoDB non disponibile.");
       }
@@ -178,46 +189,46 @@ Future<void> _saveTaskToDatabase(Task task) async {
     }
   }
 
-void _addTask(Task task, String listId, {bool updateState = true}) {
-  if (updateState) {
-    setState(() {
-      for (var column in taskColumns) {
-        if (column.id == listId) {
-          column.tasks.add(task);
-          print("Task aggiunto alla colonna: ${column.title}"); // Debug log
-          _saveTaskToDatabase(task);
-          break;
+  void _addTask(Task task, String listId, {bool updateState = true}) {
+    if (updateState) {
+      setState(() {
+        for (var column in taskColumns) {
+          if (column.id == listId) {
+            column.tasks.add(task);
+            print("Task aggiunto alla colonna: ${column.title}"); // Debug log
+            _saveTaskToDatabase(task);
+            break;
+          }
         }
-      }
-    });
+      });
+    }
   }
-}
-
 
   void _removeTask(Task task) {
     setState(() {
       for (var column in taskColumns) {
         column.tasks.remove(task);
-        _deleteTaskFromDatabase(task);  // Elimina il task dal database
+        _deleteTaskFromDatabase(task); // Elimina il task dal database
       }
     });
   }
 
   void _updateTask(Task oldTask, Task updatedTask) {
-  setState(() {
-    for (var column in taskColumns) {
-      if (column.id == oldTask.list) {  // Usa l'ID della colonna
-        int index = column.tasks.indexOf(oldTask);
-        if (index != -1) {
-          column.tasks[index] = updatedTask;
-          updatedTask.databaseId = oldTask.databaseId;
-          _updateTaskInDatabase(updatedTask);  // Aggiorna il task nel database
+    setState(() {
+      for (var column in taskColumns) {
+        if (column.id == oldTask.list) {
+          // Usa l'ID della colonna
+          int index = column.tasks.indexOf(oldTask);
+          if (index != -1) {
+            column.tasks[index] = updatedTask;
+            updatedTask.databaseId = oldTask.databaseId;
+            _updateTaskInDatabase(updatedTask); // Aggiorna il task nel database
+          }
+          break;
         }
-        break;
       }
-    }
-  });
-}
+    });
+  }
 
   void _duplicateTask(Task task, String list) {
     final duplicatedTask = Task(
@@ -226,10 +237,12 @@ void _addTask(Task task, String listId, {bool updateState = true}) {
       list: list,
       markerColor: task.markerColor,
       members: task.members.map((member) => Member(name: member.name)).toList(),
-      labels: task.labels.map((label) => Label(
-        name: label.name,
-        color: label.color,
-      )).toList(),
+      labels: task.labels
+          .map((label) => Label(
+                name: label.name,
+                color: label.color,
+              ))
+          .toList(),
       dueDate: task.dueDate,
       estimatedTime: task.estimatedTime,
       attachments: task.attachments,
@@ -237,264 +250,280 @@ void _addTask(Task task, String listId, {bool updateState = true}) {
     _addTask(duplicatedTask, list);
   }
 
-void _removeTaskColumn(String columnId) async {
-  try {
-    // Trova la colonna da eliminare
-    final columnToRemove = taskColumns.firstWhere((column) => column.id == columnId);
+  void _removeTaskColumn(String columnId) async {
+    try {
+      // Trova la colonna da eliminare
+      final columnToRemove =
+          taskColumns.firstWhere((column) => column.id == columnId);
 
-    // Rimuovi la colonna dallo stato
-    setState(() {
-      taskColumns.removeWhere((column) => column.id == columnId);
-    });
+      // Rimuovi la colonna dallo stato
+      setState(() {
+        taskColumns.removeWhere((column) => column.id == columnId);
+      });
 
-    // Elimina la colonna dal database
-    if (columnToRemove.databaseId != null) {
-      final databaseService = DatabaseService();
-      final authService = AuthService();
+      // Elimina la colonna dal database
+      if (columnToRemove.databaseId != null) {
+        final databaseService = DatabaseService();
+        final authService = AuthService();
 
-      final user = await authService.fetchCurrentUser(widget.token);
-      final dbName = '${user.username}-${widget.dbName}';
+        final user = await authService.fetchCurrentUser(widget.token);
+        final dbName = '${user.username}-${widget.dbName}';
 
-      await databaseService.deleteCollectionData(dbName, 'taskLists', columnToRemove.databaseId!, widget.token);
-    } else {
-      print("Errore: ID del documento MongoDB non disponibile per l'eliminazione.");
-    }
-  } catch (e) {
-    print("Errore durante l'eliminazione della lista: $e");
-  }
-}
-
-void _duplicateTaskColumn(TaskColumnData column) async {
-  try {
-    final duplicatedColumn = TaskColumnData(
-      currentBoardId,
-      '${column.title} (Copy)',
-      column.tasks.map((task) => Task(
-        title: '${task.title} (Copy)',
-        description: task.description,
-        list: column.id,
-        markerColor: task.markerColor,
-        members: task.members.map((member) => Member(name: member.name)).toList(),
-        labels: task.labels.map((label) => Label(
-          name: label.name,
-          color: label.color,
-        )).toList(),
-        dueDate: task.dueDate,
-        estimatedTime: task.estimatedTime,
-        attachments: task.attachments,
-      )).toList(),
-    );
-
-    setState(() {
-      taskColumns.add(duplicatedColumn);
-    });
-
-    // Salva la colonna duplicata nel database
-    await _saveTaskColumnToDatabase(duplicatedColumn);
-  } catch (e) {
-    print("Errore durante la duplicazione della lista: $e");
-  }
-}
-
-
-void _moveTask(Task task, String newListId, int newIndex) {
-  setState(() {
-    // Rimuovi il task dalla vecchia colonna
-    for (var column in taskColumns) {
-      if (column.id == task.list) { // Ora task.list contiene l'ID della colonna
-        column.tasks.remove(task);
-        break;
+        await databaseService.deleteCollectionData(
+            dbName, 'taskLists', columnToRemove.databaseId!, widget.token);
+      } else {
+        print(
+            "Errore: ID del documento MongoDB non disponibile per l'eliminazione.");
       }
+    } catch (e) {
+      print("Errore durante l'eliminazione della lista: $e");
     }
+  }
 
-    // Aggiorna il valore della lista con il nuovo ID
-    task.list = newListId;
+  void _duplicateTaskColumn(TaskColumnData column) async {
+    try {
+      final duplicatedColumn = TaskColumnData(
+        currentBoardId,
+        '${column.title} (Copy)',
+        column.tasks
+            .map((task) => Task(
+                  title: '${task.title} (Copy)',
+                  description: task.description,
+                  list: column.id,
+                  markerColor: task.markerColor,
+                  members: task.members
+                      .map((member) => Member(name: member.name))
+                      .toList(),
+                  labels: task.labels
+                      .map((label) => Label(
+                            name: label.name,
+                            color: label.color,
+                          ))
+                      .toList(),
+                  dueDate: task.dueDate,
+                  estimatedTime: task.estimatedTime,
+                  attachments: task.attachments,
+                ))
+            .toList(),
+      );
 
-    // Inserisci il task nella nuova colonna
-    for (var column in taskColumns) {
-      if (column.id == newListId) {
-        if (newIndex > column.tasks.length) newIndex = column.tasks.length;
-        column.tasks.insert(newIndex, task);
-        break;
+      setState(() {
+        taskColumns.add(duplicatedColumn);
+      });
+
+      // Salva la colonna duplicata nel database
+      await _saveTaskColumnToDatabase(duplicatedColumn);
+    } catch (e) {
+      print("Errore durante la duplicazione della lista: $e");
+    }
+  }
+
+  void _moveTask(Task task, String newListId, int newIndex) {
+    setState(() {
+      // Rimuovi il task dalla vecchia colonna
+      for (var column in taskColumns) {
+        if (column.id == task.list) {
+          // Ora task.list contiene l'ID della colonna
+          column.tasks.remove(task);
+          break;
+        }
       }
-    }
-    _updateTaskInDatabase(task);  // Aggiorna il task nel database
-  });
-}
-void _showCreateBoardDialog() {
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Create New Board'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Board Name'),
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Board Description'),
+      // Aggiorna il valore della lista con il nuovo ID
+      task.list = newListId;
+
+      // Inserisci il task nella nuova colonna
+      for (var column in taskColumns) {
+        if (column.id == newListId) {
+          if (newIndex > column.tasks.length) newIndex = column.tasks.length;
+          column.tasks.insert(newIndex, task);
+          break;
+        }
+      }
+      _updateTaskInDatabase(task); // Aggiorna il task nel database
+    });
+  }
+
+  void _showCreateBoardDialog() {
+    final _nameController = TextEditingController();
+    final _descriptionController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Create New Board'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Board Name'),
+              ),
+              TextField(
+                controller: _descriptionController,
+                decoration:
+                    const InputDecoration(labelText: 'Board Description'),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                final name = _nameController.text;
+                final description = _descriptionController.text;
+
+                if (name.isNotEmpty) {
+                  final newBoardId =
+                      Uuid().v4(); // Genera un ID univoco per la board
+                  final newBoard = Board(
+                    id: newBoardId,
+                    name: name,
+                    description: description,
+                  );
+
+                  final databaseService = DatabaseService();
+                  final user =
+                      await AuthService().fetchCurrentUser(widget.token);
+                  final dbName = '${user.username}-${widget.dbName}';
+
+                  // Assicurati di includere esplicitamente l'ID nel JSON durante il salvataggio
+                  await databaseService.addDataToCollection(
+                    dbName,
+                    'boards',
+                    newBoard.toJson(), // Questo include l'ID della board
+                    widget.token,
+                  );
+
+                  setState(() {
+                    boards.add(newBoard);
+                    currentBoard = newBoard; // Seleziona la board appena creata
+                    currentBoardId = newBoard.id;
+                    taskColumns.clear(); // Pulisci le colonne
+                  });
+
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Create'),
             ),
           ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              final name = _nameController.text;
-              final description = _descriptionController.text;
-
-              if (name.isNotEmpty) {
-                final newBoardId = Uuid().v4(); // Genera un ID univoco per la board
-                final newBoard = Board(
-                  id: newBoardId,
-                  name: name,
-                  description: description,
-                );
-
-                final databaseService = DatabaseService();
-                final user = await AuthService().fetchCurrentUser(widget.token);
-                final dbName = '${user.username}-${widget.dbName}';
-
-                // Assicurati di includere esplicitamente l'ID nel JSON durante il salvataggio
-                await databaseService.addDataToCollection(
-                  dbName,
-                  'boards',
-                  newBoard.toJson(), // Questo include l'ID della board
-                  widget.token,
-                );
-
-                setState(() {
-                  boards.add(newBoard);
-                  currentBoard = newBoard; // Seleziona la board appena creata
-                  currentBoardId = newBoard.id;
-                  taskColumns.clear(); // Pulisci le colonne
-                });
-
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
-Future<void> _loadBoardsFromDatabase() async {
-  try {
-    final databaseService = DatabaseService();
-    final user = await AuthService().fetchCurrentUser(widget.token);
-    final dbName = '${user.username}-${widget.dbName}';
-
-    // Carica le board dal database
-    final boardsData = await databaseService.fetchCollectionData(
-      dbName,
-      'boards',
-      widget.token,
+        );
+      },
     );
-
-    setState(() {
-      boards = boardsData.map<Board>((boardJson) => Board.fromJson(boardJson)).toList();
-
-      // Seleziona la prima board come predefinita se non c'è nessuna selezionata
-      if (currentBoard == null && boards.isNotEmpty) {
-        currentBoard = boards.first;
-        currentBoardId = currentBoard!.id; // Aggiorna il currentBoardId
-        _loadTasksFromDatabase(); // Ricarica le taskLists per la board selezionata
-      }
-    });
-  } catch (e) {
-    print("Errore durante il caricamento delle board: $e");
   }
-}
 
- void _showAddTaskColumnDialog(BuildContext context) {
-  final _titleController = TextEditingController();
+  Future<void> _loadBoardsFromDatabase() async {
+    try {
+      final databaseService = DatabaseService();
+      final user = await AuthService().fetchCurrentUser(widget.token);
+      final dbName = '${user.username}-${widget.dbName}';
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Create Task List'),
-        content: TextField(
-          controller: _titleController,
-          decoration: const InputDecoration(labelText: 'Title'),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                if (taskColumns.any((column) => column.title == _titleController.text)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('A list with this name already exists'),
-                    ),
-                  );
-                } else {
-                  final newColumn = TaskColumnData(
-                    currentBoardId, // Assegna il valore di currentBoardId
-                    _titleController.text,
-                    [],
-                  );
-                  taskColumns.add(newColumn);
-                  _saveTaskColumnToDatabase(newColumn); // Salva la nuova colonna nel database
-                }
-              });
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              'Create',
-              style: TextStyle(color: Colors.grey[800]),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[300],
-            ),
-          ),
-        ],
+      // Carica le board dal database
+      final boardsData = await databaseService.fetchCollectionData(
+        dbName,
+        'boards',
+        widget.token,
       );
-    },
-  );
-}
 
+      setState(() {
+        boards = boardsData
+            .map<Board>((boardJson) => Board.fromJson(boardJson))
+            .toList();
 
-  void _navigateToAddTaskPage(BuildContext context, String listId, {Task? task}) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => AddTaskPage(
-        list: listId,  // Passa l'ID della colonna
-        onAddTask: (newTask) {
-          if (task != null) {
-            _updateTask(task, newTask);
-          } else {
-            _addTask(newTask, listId);
-          }
-        },
-        labels: labels,
-        members: members,
-        onAddLabel: (label) {
-          setState(() {
-            labels.add(label);
-          });
-        },
-        onAddMember: (member) {
-          setState(() {
-            members.add(member);
-          });
-        },
-        existingTask: task,
+        // Seleziona la prima board come predefinita se non c'è nessuna selezionata
+        if (currentBoard == null && boards.isNotEmpty) {
+          currentBoard = boards.first;
+          currentBoardId = currentBoard!.id; // Aggiorna il currentBoardId
+          _loadTasksFromDatabase(); // Ricarica le taskLists per la board selezionata
+        }
+      });
+    } catch (e) {
+      print("Errore durante il caricamento delle board: $e");
+    }
+  }
+
+  void _showAddTaskColumnDialog(BuildContext context) {
+    final _titleController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Create Task List'),
+          content: TextField(
+            controller: _titleController,
+            decoration: const InputDecoration(labelText: 'Title'),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  if (taskColumns
+                      .any((column) => column.title == _titleController.text)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('A list with this name already exists'),
+                      ),
+                    );
+                  } else {
+                    final newColumn = TaskColumnData(
+                      currentBoardId, // Assegna il valore di currentBoardId
+                      _titleController.text,
+                      [],
+                    );
+                    taskColumns.add(newColumn);
+                    _saveTaskColumnToDatabase(
+                        newColumn); // Salva la nuova colonna nel database
+                  }
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Create',
+                style: TextStyle(color: Colors.grey[800]),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToAddTaskPage(BuildContext context, String listId,
+      {Task? task}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTaskPage(
+          list: listId, // Passa l'ID della colonna
+          onAddTask: (newTask) {
+            if (task != null) {
+              _updateTask(task, newTask);
+            } else {
+              _addTask(newTask, listId);
+            }
+          },
+          labels: labels,
+          members: members,
+          onAddLabel: (label) {
+            setState(() {
+              labels.add(label);
+            });
+          },
+          onAddMember: (member) {
+            setState(() {
+              members.add(member);
+            });
+          },
+          existingTask: task,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showTaskDetails(Task task) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -559,20 +588,24 @@ Future<void> _loadBoardsFromDatabase() async {
                           _buildTaskField(
                             title: "Description",
                             content: MarkdownBody(
-                              data: _customizeMarkdownCheckboxes(task.description),
+                              data: _customizeMarkdownCheckboxes(
+                                  task.description),
                             ),
                           ),
                         if (task.members.isNotEmpty)
                           _buildTaskField(
                             title: "Members",
                             content: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Wrap(
                                 spacing: 8.0,
                                 runSpacing: 8.0,
                                 children: task.members.map((member) {
                                   return Chip(
-                                    label: Text(member.name, style: TextStyle(color: Colors.black87)),
+                                    label: Text(member.name,
+                                        style:
+                                            TextStyle(color: Colors.black87)),
                                     backgroundColor: Colors.grey[200],
                                   );
                                 }).toList(),
@@ -583,20 +616,24 @@ Future<void> _loadBoardsFromDatabase() async {
                           _buildTaskField(
                             title: "Labels",
                             content: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Wrap(
                                 spacing: 8.0,
                                 runSpacing: 8.0,
                                 children: task.labels.map((label) {
                                   return Chip(
-                                    label: Text(label.name, style: TextStyle(color: Colors.black87)),
+                                    label: Text(label.name,
+                                        style:
+                                            TextStyle(color: Colors.black87)),
                                     backgroundColor: label.color,
                                   );
                                 }).toList(),
                               ),
                             ),
                           ),
-                        if (task.dueDate.isNotEmpty || task.estimatedTime.isNotEmpty)
+                        if (task.dueDate.isNotEmpty ||
+                            task.estimatedTime.isNotEmpty)
                           _buildTaskField(
                             title: "Due Date & Estimated Time",
                             content: Column(
@@ -613,11 +650,14 @@ Future<void> _loadBoardsFromDatabase() async {
                           _buildTaskField(
                             title: "Attachments",
                             content: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
                               child: Wrap(
                                 spacing: 8.0,
                                 runSpacing: 8.0,
-                                children: task.attachments.split(', ').map((attachment) {
+                                children: task.attachments
+                                    .split(', ')
+                                    .map((attachment) {
                                   return Chip(
                                     label: Text(attachment),
                                     backgroundColor: Colors.grey[200],
@@ -668,226 +708,41 @@ Future<void> _loadBoardsFromDatabase() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-appBar: AppBar(
-  elevation: 6, // Aggiunge l'elevazione per l'ombreggiatura
-  backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
-  shadowColor: Colors.black26, // Colore dell'ombra
-  leadingWidth: 100, // Imposta la larghezza del lato sinistro per evitare sovrapposizioni
-  leading: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black), // Freccia indietro nera
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      IconButton(
-        icon: const Icon(Icons.menu, color: Colors.black), // Simbolo dell'hamburger nero
-        onPressed: () {
+      appBar: TaskBoardAppBar(
+        isMenuOpen: _isMenuOpen,
+        onMenuToggle: () {
           setState(() {
-            _isMenuOpen = !_isMenuOpen; // Mostra/nascondi il menu laterale
+            _isMenuOpen = !_isMenuOpen;
           });
         },
+        onCreateBoard: _showCreateBoardDialog,
+        onAddTaskList: () => _showAddTaskColumnDialog(context),
       ),
-    ],
-  ),
-  title: const Text(
-    'Task Board',
-    style: TextStyle(color: Colors.black), // Testo nero
-  ),
-  centerTitle: false, // Mantiene il titolo allineato a sinistra
-  actions: [
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Create Board',
-          style: TextStyle(color: Colors.white),
-        ),
-        onPressed: _showCreateBoardDialog, // Chiama la funzione per creare una board
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+      body: TaskBoardBody(
+        isMenuOpen: _isMenuOpen,
+        boards: boards,
+        currentBoard: currentBoard,
+        taskColumns: taskColumns,
+        currentBoardId: currentBoardId,
+        onBoardSelected: (boardId) {
+          setState(() {
+            currentBoardId = boardId;
+            currentBoard = boards.firstWhere(
+                (board) => board.id == boardId); // Aggiorna anche currentBoard
+            taskColumns.clear();
+            _loadTasksFromDatabase(); // Ricarica le colonne relative alla bacheca selezionata
+          });
+        },
+        onCreateBoard: _showCreateBoardDialog,
+        onAddTaskColumn: (listId) => _showAddTaskColumnDialog(context),
+        onMoveTask: _moveTask,
+        onRemoveTask: _removeTask,
+        onTaskTap: _showTaskDetails,
+        onDuplicateTask: _duplicateTask,
+        onRemoveColumn: _removeTaskColumn,
+        onDuplicateColumn: _duplicateTaskColumn,
+        navigateToAddTaskPage: _navigateToAddTaskPage,
       ),
-    ),
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
-      child: ElevatedButton.icon(
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Crea Task List',
-          style: TextStyle(color: Colors.white),
-        ),
-        onPressed: () => _showAddTaskColumnDialog(context),
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
-      ),
-    ),
-  ],
-),
-
-body: Container(
-  color: Colors.white, // Sfondo bianco per la pagina principale
-  child: Row(
-    children: [
-      // Menu laterale
-      if (_isMenuOpen)
-        Material(
-          elevation: 6, // Elevazione per aggiungere ombra
-          child: Container(
-            width: 300,
-            color: Colors.white, // Sfondo bianco per il menu
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sezione: "Bacheche"
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Bacheche',
-                    style: TextStyle(
-                      color: Colors.black, // Testo nero
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const Divider(color: Colors.black45), // Separatore scuro
-
-                // Sezione: "Viste dello spazio di lavoro"
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Viste dello spazio di lavoro',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                ListTile(
-                  leading: Icon(Icons.table_chart, color: Colors.black),
-                  title: Text('Tabella', style: TextStyle(color: Colors.black)),
-                  onTap: () {
-                    // Logica per Tabella
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.calendar_today, color: Colors.black),
-                  title: Text('Calendario', style: TextStyle(color: Colors.black)),
-                  onTap: () {
-                    // Logica per Calendario
-                  },
-                ),
-                const Divider(color: Colors.black45), // Separatore scuro
-
-                // Sezione: "Le tue bacheche"
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Le tue bacheche',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.add, color: Colors.black),
-                        onPressed: _showCreateBoardDialog,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Lista delle bacheche
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: boards.length,
-                    itemBuilder: (context, index) {
-                      final board = boards[index];
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            currentBoard = board;
-                            currentBoardId = board.id;
-                            taskColumns.clear();
-                            _loadTasksFromDatabase();
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8.0),
-                          padding: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            color: currentBoard?.id == board.id
-                                ? Colors.grey[700]
-                                : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: Text(
-                            board.name,
-                            style: TextStyle(
-                              color: currentBoard?.id == board.id
-                                  ? Colors.white
-                                  : Colors.black,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-      // Contenuto principale
-      Expanded(
-        child: taskColumns.isNotEmpty
-            ? SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: taskColumns.map((column) {
-                    return Container(
-                      width: 300,
-                      child: TaskColumn(
-                        id: column.id,
-                        title: column.title,
-                        tasks: column.tasks,
-                        onMoveTask: _moveTask,
-                        onAddTask: () =>
-                            _navigateToAddTaskPage(context, column.id),
-                        onRemoveTask: _removeTask,
-                        onTaskTap: _showTaskDetails,
-                        onDuplicateTask: _duplicateTask,
-                        onRemoveColumn: _removeTaskColumn,
-                        onDuplicateColumn: _duplicateTaskColumn,
-                        onEditTask: (task) =>
-                            _navigateToAddTaskPage(context, column.id, task: task),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              )
-            : Center(
-                child: Text(
-                  'Nessuna lista di task trovata per questa bacheca.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                ),
-              ),
-      ),
-    ],
-  ),
-),
-
     );
   }
 }
-
-
-
