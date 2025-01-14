@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/add_task.dart';
+import 'package:flutter_app/pages/task_board/components/task_board_app_bar.dart';
 import 'package:flutter_app/pages/task_board/components/task_board_body.dart';
 import 'package:flutter_app/pages/task_board/components/task_board_class.dart';
+import 'package:flutter_app/pages/task_board/components/task_board_service.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_column.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -62,44 +64,14 @@ class _TaskBoardState extends State<TaskBoard> {
 
   Future<void> _loadTasksFromDatabase() async {
     try {
-      final databaseService = DatabaseService();
-      final authService = AuthService();
-
-      // Ottenere l'utente corrente utilizzando il token
-      final user = await authService.fetchCurrentUser(widget.token);
-      final dbName = '${user.username}-${widget.dbName}';
-
-      // Carica le liste dal database, filtrando per boardId
-      final listsData = await databaseService.fetchCollectionData(
-          dbName, 'taskLists', widget.token);
+      final loadedColumns = await loadTasksFromDatabase(
+        widget.token,
+        widget.dbName,
+        currentBoardId,
+      );
 
       setState(() {
-        // Pulisci le colonne esistenti
-        taskColumns.clear();
-
-        // Filtra le liste per boardId e aggiungile alla board
-        for (var listJson in listsData) {
-          if (listJson['boardId'] == currentBoardId) {
-            final taskColumn = TaskColumnData.fromJson(listJson);
-            taskColumns.add(taskColumn);
-          }
-        }
-      });
-
-      // Ora carica i task e assegnali alle colonne corrette
-      final tasksData = await databaseService.fetchCollectionData(
-          dbName, 'tasks', widget.token);
-
-      setState(() {
-        for (var taskJson in tasksData) {
-          final task = Task.fromJson(taskJson);
-          for (var column in taskColumns) {
-            if (column.id == task.list) {
-              column.tasks.add(task);
-              break;
-            }
-          }
-        }
+        taskColumns = loadedColumns;
       });
     } catch (e) {
       print("Errore durante il caricamento dei task: $e");
@@ -108,25 +80,12 @@ class _TaskBoardState extends State<TaskBoard> {
 
   Future<void> _saveTaskColumnToDatabase(TaskColumnData column) async {
     try {
-      final databaseService = DatabaseService();
-      final authService = AuthService();
-
-      final user = await authService.fetchCurrentUser(widget.token);
-      final dbName = '${user.username}-${widget.dbName}';
-
-      // Aggiorna il valore di boardId per la colonna
-      column.boardId = currentBoardId;
-
-      if (column.databaseId != null) {
-        await databaseService.updateCollectionData(dbName, 'taskLists',
-            column.databaseId!, column.toJson(), widget.token);
-      } else {
-        final newDatabaseId = (await databaseService.addDataToCollection(
-            dbName, 'taskLists', column.toJson(), widget.token))["id"];
-        setState(() {
-          column.databaseId = newDatabaseId;
-        });
-      }
+      await saveTaskColumnToDatabase(
+        widget.token,
+        widget.dbName,
+        currentBoardId,
+        column,
+      );
     } catch (e) {
       print("Errore durante il salvataggio della lista: $e");
     }
@@ -134,15 +93,7 @@ class _TaskBoardState extends State<TaskBoard> {
 
   Future<void> _saveTaskToDatabase(Task task) async {
     try {
-      final databaseService = DatabaseService();
-      final authService = AuthService();
-
-      final user = await authService.fetchCurrentUser(widget.token);
-      final dbName = '${user.username}-${widget.dbName}';
-      final collectionName = 'tasks';
-
-      await databaseService.addDataToCollection(
-          dbName, collectionName, task.toJson(), widget.token);
+      await saveTaskToDatabase(widget.token, widget.dbName, task);
     } catch (e) {
       print("Errore durante il salvataggio del task: $e");
     }
@@ -251,29 +202,18 @@ class _TaskBoardState extends State<TaskBoard> {
 
   void _removeTaskColumn(String columnId) async {
     try {
-      // Trova la colonna da eliminare
       final columnToRemove =
           taskColumns.firstWhere((column) => column.id == columnId);
 
-      // Rimuovi la colonna dallo stato
       setState(() {
-        taskColumns.removeWhere((column) => column.id == columnId);
+        taskColumns.remove(columnToRemove); // Rimuove la colonna dallo stato
       });
 
-      // Elimina la colonna dal database
-      if (columnToRemove.databaseId != null) {
-        final databaseService = DatabaseService();
-        final authService = AuthService();
-
-        final user = await authService.fetchCurrentUser(widget.token);
-        final dbName = '${user.username}-${widget.dbName}';
-
-        await databaseService.deleteCollectionData(
-            dbName, 'taskLists', columnToRemove.databaseId!, widget.token);
-      } else {
-        print(
-            "Errore: ID del documento MongoDB non disponibile per l'eliminazione.");
-      }
+      await removeTaskColumnFromDatabase(
+        widget.token,
+        widget.dbName,
+        columnToRemove,
+      );
     } catch (e) {
       print("Errore durante l'eliminazione della lista: $e");
     }
@@ -281,36 +221,13 @@ class _TaskBoardState extends State<TaskBoard> {
 
   void _duplicateTaskColumn(TaskColumnData column) async {
     try {
-      final duplicatedColumn = TaskColumnData(
-        currentBoardId,
-        '${column.title} (Copy)',
-        column.tasks
-            .map((task) => Task(
-                  title: '${task.title} (Copy)',
-                  description: task.description,
-                  list: column.id,
-                  markerColor: task.markerColor,
-                  members: task.members
-                      .map((member) => Member(name: member.name))
-                      .toList(),
-                  labels: task.labels
-                      .map((label) => Label(
-                            name: label.name,
-                            color: label.color,
-                          ))
-                      .toList(),
-                  dueDate: task.dueDate,
-                  estimatedTime: task.estimatedTime,
-                  attachments: task.attachments,
-                ))
-            .toList(),
-      );
+      final duplicatedColumn =
+          await duplicateTaskColumn(currentBoardId, column);
 
       setState(() {
         taskColumns.add(duplicatedColumn);
       });
 
-      // Salva la colonna duplicata nel database
       await _saveTaskColumnToDatabase(duplicatedColumn);
     } catch (e) {
       print("Errore durante la duplicazione della lista: $e");
@@ -707,68 +624,15 @@ class _TaskBoardState extends State<TaskBoard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 6, // Aggiunge l'elevazione per l'ombreggiatura
-        backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
-        shadowColor: Colors.black26, // Colore dell'ombra
-        leadingWidth:
-            100, // Imposta la larghezza del lato sinistro per evitare sovrapposizioni
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back,
-                  color: Colors.black), // Freccia indietro nera
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.menu,
-                  color: Colors.black), // Simbolo dell'hamburger nero
-              onPressed: () {
-                setState(() {
-                  _isMenuOpen =
-                      !_isMenuOpen; // Mostra/nascondi il menu laterale
-                });
-              },
-            ),
-          ],
-        ),
-        title: const Text(
-          'Task Board',
-          style: TextStyle(color: Colors.black), // Testo nero
-        ),
-        centerTitle: false, // Mantiene il titolo allineato a sinistra
-        actions: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'Create Board',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed:
-                  _showCreateBoardDialog, // Chiama la funzione per creare una board
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
-            ),
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'Crea Task List',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () => _showAddTaskColumnDialog(context),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
-            ),
-          ),
-        ],
+      appBar: TaskBoardAppBar(
+        isMenuOpen: _isMenuOpen,
+        onMenuToggle: () {
+          setState(() {
+            _isMenuOpen = !_isMenuOpen;
+          });
+        },
+        onCreateBoard: _showCreateBoardDialog,
+        onAddTaskList: () => _showAddTaskColumnDialog(context),
       ),
       body: TaskBoardBody(
         isMenuOpen: _isMenuOpen,
