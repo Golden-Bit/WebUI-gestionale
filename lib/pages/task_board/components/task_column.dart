@@ -209,14 +209,14 @@ class _TaskColumnState extends State<TaskColumn> {
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             width: double.infinity,
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.add, color: Colors.grey),
+              icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
                 'Crea Task',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: Colors.white),
               ),
               onPressed: widget.onAddTask,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[300],
+                backgroundColor: Colors.grey[700],
               ),
             ),
           ),

@@ -16,9 +16,9 @@ class TaskBoardAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      elevation: 6, // Aggiunge l'elevazione per l'ombreggiatura
+      elevation: 4, // Aggiunge l'elevazione per l'ombreggiatura
       backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
-      shadowColor: Colors.black26, // Colore dell'ombra
+      shadowColor: Colors.black, // Colore dell'ombra
       leadingWidth: 100, // Imposta la larghezza del lato sinistro per evitare sovrapposizioni
       leading: Row(
         mainAxisSize: MainAxisSize.min,
@@ -47,7 +47,7 @@ class TaskBoardAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text(
-              'Create Board',
+              'Crea Board',
               style: TextStyle(color: Colors.white),
             ),
             onPressed: onCreateBoard, // Callback per creare una board

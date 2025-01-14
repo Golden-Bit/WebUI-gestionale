@@ -219,3 +219,88 @@ Future<void> deleteTaskFromDatabase(
     token,
   );
 }
+
+
+
+
+
+
+
+
+/// Elimina una board dal database
+Future<void> deleteBoardFromDatabase(
+  String token,
+  String dbName,
+  Board board,
+) async {
+  if (board.id == null) {
+    throw Exception("Errore: ID della board non trovato.");
+  }
+
+  final databaseService = DatabaseService();
+  final authService = AuthService();
+
+  final user = await authService.fetchCurrentUser(token);
+  final actualDbName = '${user.username}-$dbName';
+
+  await databaseService.deleteCollectionData(
+    actualDbName,
+    'boards',
+    board.databaseId!, // Usa l'ID della board
+    token,
+  );
+}
+
+/// Aggiorna una board nel database
+Future<void>   updateBoardInDatabase(
+  String token,
+  String dbName,
+  Board board,
+) async {
+  if (board.id == null) {
+    throw Exception("Errore: ID della board non trovato.");
+  }
+
+  final databaseService = DatabaseService();
+  final authService = AuthService();
+
+  final user = await authService.fetchCurrentUser(token);
+  final actualDbName = '${user.username}-$dbName';
+  print(board.databaseId);
+  await databaseService.updateCollectionData(
+    actualDbName,
+    'boards',
+    board.databaseId!, // Usa l'ID della board
+    board.toJson(),
+    token,
+  );
+}
+
+
+
+
+/// Aggiorna una task list nel database
+Future<void> updateTaskListInDatabase(
+  String token,
+  String dbName,
+  TaskColumnData taskList,
+) async {
+  if (taskList.databaseId == null) {
+    throw Exception("Errore: ID della task list non trovato.");
+  }
+
+  final databaseService = DatabaseService();
+  final authService = AuthService();
+
+  final user = await authService.fetchCurrentUser(token);
+  final actualDbName = '${user.username}-$dbName';
+
+  await databaseService.updateCollectionData(
+    actualDbName,
+    'taskLists',
+    taskList.databaseId!,
+    taskList.toJson(),
+    token,
+  );
+}
+

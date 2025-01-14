@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/task_board/components/edit_task_helpers.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
-import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart';
-
 
 class AddTaskPage extends StatefulWidget {
   final String list;
@@ -41,215 +39,18 @@ class _AddTaskPageState extends State<AddTaskPage> {
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(text: widget.existingTask?.title ?? '');
-    _descriptionController = TextEditingController(text: widget.existingTask?.description ?? '');
-    _dueDateController = TextEditingController(text: widget.existingTask?.dueDate ?? '');
-    _estimatedTimeController = TextEditingController(text: widget.existingTask?.estimatedTime ?? '');
+    _titleController =
+        TextEditingController(text: widget.existingTask?.title ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.existingTask?.description ?? '');
+    _dueDateController =
+        TextEditingController(text: widget.existingTask?.dueDate ?? '');
+    _estimatedTimeController =
+        TextEditingController(text: widget.existingTask?.estimatedTime ?? '');
     _attachments = widget.existingTask?.attachments.split(', ') ?? [];
     _selectedColor = widget.existingTask?.markerColor ?? Colors.transparent;
     _selectedLabels = widget.existingTask?.labels ?? [];
     _selectedMembers = widget.existingTask?.members ?? [];
-  }
-
-  Future<void> _selectDueDate(BuildContext context) async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null) {
-      TimeOfDay? time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-      if (time != null) {
-        setState(() {
-          _dueDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(
-              DateTime(picked.year, picked.month, picked.day, time.hour,
-                  time.minute));
-        });
-      }
-    }
-  }
-
-  Future<void> _selectAttachment() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: true);
-
-      if (result != null) {
-        setState(() {
-          _attachments.addAll(result.files.map((file) => file.name).toList());
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error selecting files: $e'),
-        ),
-      );
-    }
-  }
-
-  void _addLabel() {
-    final _labelNameController = TextEditingController();
-    Color _labelColor = Colors.transparent;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Create New Label'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _labelNameController,
-                    decoration: InputDecoration(labelText: 'Label Name'),
-                  ),
-                  Row(
-                    children: [
-                      Text('Select Color:'),
-                      SizedBox(width: 10),
-                      ...Colors.primaries.map((color) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _labelColor = color;
-                            });
-                          },
-                          child: Container(
-                            margin: EdgeInsets.symmetric(horizontal: 5.0),
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: _labelColor == color
-                                  ? Border.all(width: 2.0, color: Colors.black)
-                                  : null,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    final label = Label(
-                      name: _labelNameController.text,
-                      color: _labelColor,
-                    );
-                    widget.onAddLabel(label);
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Add'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _addMember() {
-    final _memberNameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Create New Member'),
-          content: TextField(
-            controller: _memberNameController,
-            decoration: InputDecoration(labelText: 'Member Name'),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                final member = Member(name: _memberNameController.text);
-                widget.onAddMember(member);
-                Navigator.of(context).pop();
-              },
-              child: Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showMemberMenu(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      items: widget.members.map((Member member) {
-        return PopupMenuItem<Member>(
-          value: member,
-          child: ListTile(
-            title: Text(member.name),
-          ),
-        );
-      }).toList(),
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          _selectedMembers.add(value);
-        });
-      }
-    });
-  }
-
-  void _showLabelMenu(BuildContext context) {
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      items: widget.labels.map((Label label) {
-        return PopupMenuItem<Label>(
-          value: label,
-          child: ListTile(
-            title: Text(label.name),
-            leading: CircleAvatar(
-              backgroundColor: label.color,
-            ),
-          ),
-        );
-      }).toList(),
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          _selectedLabels.add(value);
-        });
-      }
-    });
   }
 
   Widget _buildInputField({required String title, required Widget content}) {
@@ -283,15 +84,57 @@ class _AddTaskPageState extends State<AddTaskPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+      elevation: 4, // Aggiunge l'elevazione per l'ombreggiatura
+      backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
+      shadowColor: Colors.black, // Colore dell'ombra
+      leadingWidth: 100, // Imposta la larghezza del lato sinistro per evitare sovrapposizioni
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.black), // Icona nera
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(widget.existingTask != null ? 'Edit Task' : 'Add Task'),
+        title: Text(
+          widget.existingTask != null ? 'Edit Task' : 'Add Task',
+          style: const TextStyle(color: Colors.black), // Testo nero
+        ),
+        centerTitle: false, // Allineamento del titolo a sinistra
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8.0), // Margine orizzontale
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.save, color: Colors.white),
+              label: const Text(
+                'Salva Task',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () {
+                // Funzione di salvataggio del task
+                final task = Task(
+                  title: _titleController.text,
+                  description: _descriptionController.text,
+                  list: widget.list,
+                  markerColor: _selectedColor,
+                  members: _selectedMembers,
+                  labels: _selectedLabels,
+                  dueDate: _dueDateController.text,
+                  estimatedTime: _estimatedTimeController.text,
+                  attachments: _attachments.join(', '),
+                );
+                widget.onAddTask(task);
+                Navigator.of(context).pop();
+              }, // Callback per aggiungere una lista di task
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
+            ),
+          ),
+        ],
       ),
-      body: Padding(
+      body: Container(
+            color: Colors
+                .white, // Imposta lo sfondo bianco per il contenuto principale
+            child: Padding(
         padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
@@ -346,13 +189,35 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.add, color: Colors.black),
-                          onPressed: _addMember,
+                          icon: const Icon(Icons.add, color: Colors.black),
+                          onPressed: () {
+                            showAddMemberDialog(
+                              context: context,
+                              onAddMember: (member) {
+                                setState(() {
+                                  _selectedMembers.add(member);
+                                });
+                              },
+                            );
+                          },
                         ),
                         Builder(
-                          builder: (context) => IconButton(
-                            icon: Icon(Icons.person_add, color: Colors.black),
-                            onPressed: () => _showMemberMenu(context),
+                          builder: (context) => Builder(
+                            builder: (context) => IconButton(
+                              icon: const Icon(Icons.person_add,
+                                  color: Colors.black),
+                              onPressed: () {
+                                showMemberMenu(
+                                  context: context,
+                                  members: widget.members,
+                                  onMemberSelected: (member) {
+                                    setState(() {
+                                      _selectedMembers.add(member);
+                                    });
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -369,8 +234,17 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       decoration: InputDecoration(
                         labelText: 'Due Date',
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
-                          onPressed: () => _selectDueDate(context),
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () {
+                            selectDueDate(
+                              context: context,
+                              onDueDateSelected: (date) {
+                                setState(() {
+                                  _dueDateController.text = date;
+                                });
+                              },
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -426,13 +300,35 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.add, color: Colors.black),
-                          onPressed: _addLabel,
+                          icon: const Icon(Icons.add, color: Colors.black),
+                          onPressed: () {
+                            showAddLabelDialog(
+                              context: context,
+                              onAddLabel: (label) {
+                                setState(() {
+                                  _selectedLabels.add(label);
+                                });
+                              },
+                            );
+                          },
                         ),
                         Builder(
-                          builder: (context) => IconButton(
-                            icon: Icon(Icons.label, color: Colors.black),
-                            onPressed: () => _showLabelMenu(context),
+                          builder: (context) => Builder(
+                            builder: (context) => IconButton(
+                              icon:
+                                  const Icon(Icons.label, color: Colors.black),
+                              onPressed: () {
+                                showLabelMenu(
+                                  context: context,
+                                  labels: widget.labels,
+                                  onLabelSelected: (label) {
+                                    setState(() {
+                                      _selectedLabels.add(label);
+                                    });
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -479,8 +375,18 @@ class _AddTaskPageState extends State<AddTaskPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.attach_file),
-                          onPressed: () => _selectAttachment(),
+                          icon: const Icon(Icons.attach_file),
+                          onPressed: () {
+                            selectAttachments(
+                              context: context,
+                              currentAttachments: _attachments,
+                              onAttachmentsSelected: (attachments) {
+                                setState(() {
+                                  _attachments = attachments;
+                                });
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -515,36 +421,11 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   }).toList(),
                 ],
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  final task = Task(
-                    title: _titleController.text,
-                    description: _descriptionController.text,
-                    list: widget.list,
-                    markerColor: _selectedColor,
-                    members: _selectedMembers,
-                    labels: _selectedLabels,
-                    dueDate: _dueDateController.text,
-                    estimatedTime: _estimatedTimeController.text,
-                    attachments: _attachments.join(', '),
-                  );
-                  widget.onAddTask(task);
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  widget.existingTask != null ? 'Save Task' : 'Add Task',
-                  style: TextStyle(color: Colors.grey[800]),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  minimumSize: Size(double.infinity, 36),
-                ),
-              ),
+              //SizedBox(height: 20),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 }

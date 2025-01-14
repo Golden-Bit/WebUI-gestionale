@@ -9,16 +9,22 @@ class TaskBoardBody extends StatelessWidget {
   final Board? currentBoard; // Bacheca selezionata
   final List<TaskColumnData> taskColumns; // Elenco delle colonne
   final String currentBoardId; // ID della bacheca corrente
-  final Function(String) onBoardSelected; // Callback per selezionare una bacheca
+  final Function(String)
+      onBoardSelected; // Callback per selezionare una bacheca
   final VoidCallback onCreateBoard; // Callback per creare una nuova bacheca
   final Function(String) onAddTaskColumn; // Callback per aggiungere una colonna
   final Function(Task, String, int) onMoveTask; // Callback per spostare un task
   final Function(Task) onRemoveTask; // Callback per rimuovere un task
   final Function(Task) onTaskTap; // Callback per selezionare un task
-  final Function(Task, String) onDuplicateTask; // Callback per duplicare un task
+  final Function(Task, String)
+      onDuplicateTask; // Callback per duplicare un task
   final Function(String) onRemoveColumn; // Callback per rimuovere una colonna
-  final Function(TaskColumnData) onDuplicateColumn; // Callback per duplicare una colonna
-  final Function(BuildContext, String, {Task? task}) navigateToAddTaskPage; // Navigazione per aggiungere un task
+  final Function(TaskColumnData)
+      onDuplicateColumn; // Callback per duplicare una colonna
+  final Function(BuildContext, String, {Task? task})
+      navigateToAddTaskPage; // Navigazione per aggiungere un task
+  final Function(Board) onEditBoard; // Callback per modificare una board
+  final Function(Board) onDeleteBoard; // Callback per eliminare una board
 
   const TaskBoardBody({
     Key? key,
@@ -37,6 +43,8 @@ class TaskBoardBody extends StatelessWidget {
     required this.onRemoveColumn,
     required this.onDuplicateColumn,
     required this.navigateToAddTaskPage,
+    required this.onEditBoard,
+    required this.onDeleteBoard,
   }) : super(key: key);
 
   @override
@@ -81,14 +89,16 @@ class TaskBoardBody extends StatelessWidget {
                   ),
                   ListTile(
                     leading: Icon(Icons.table_chart, color: Colors.black),
-                    title: Text('Tabella', style: TextStyle(color: Colors.black)),
+                    title:
+                        Text('Tabella', style: TextStyle(color: Colors.black)),
                     onTap: () {
                       // Logica per Tabella
                     },
                   ),
                   ListTile(
                     leading: Icon(Icons.calendar_today, color: Colors.black),
-                    title: Text('Calendario', style: TextStyle(color: Colors.black)),
+                    title: Text('Calendario',
+                        style: TextStyle(color: Colors.black)),
                     onTap: () {
                       // Logica per Calendario
                     },
@@ -97,7 +107,8 @@ class TaskBoardBody extends StatelessWidget {
 
                   // Sezione: "Le tue bacheche"
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -118,35 +129,84 @@ class TaskBoardBody extends StatelessWidget {
                   ),
 
                   // Lista delle bacheche
-Expanded(
-  child: ListView.builder(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    itemCount: boards.length,
-    itemBuilder: (context, index) {
-      final board = boards[index];
-      final bool isSelected = currentBoardId == board.id; // Controlla se è la bacheca selezionata
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      itemCount: boards.length,
+                      itemBuilder: (context, index) {
+                        final board = boards[index];
+                        final bool isSelected = currentBoardId ==
+                            board.id; // Controlla se è la bacheca selezionata
 
-      return GestureDetector(
-        onTap: () => onBoardSelected(board.id), // Chiama il callback con l'ID della bacheca selezionata
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8.0),
-          padding: const EdgeInsets.all(12.0),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.grey[700] : Colors.grey[200], // Sfondo diverso per la bacheca selezionata
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Text(
-            board.name,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black, // Testo bianco se selezionato
-              fontSize: 14,
-            ),
-          ),
-        ),
-      );
-    },
-  ),
-),
+                        return GestureDetector(
+                          onTap: () => onBoardSelected(board.id),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8.0),
+                            padding: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.grey[700]
+                                  : Colors.grey[
+                                      200], // Sfondo diverso per la bacheca selezionata
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // Nome della board
+                                Text(
+                                  board.name,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                // Menu a tre pallini
+                                if (isSelected)
+                                  PopupMenuButton<String>(
+                                    icon: Icon(Icons.more_vert,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.black),
+                                    onSelected: (value) {
+                                      if (value == 'modifica') {
+                                        _showEditBoardDialog(context, board);
+                                      } else if (value == 'elimina') {
+                                        onDeleteBoard(board);
+                                      }
+                                    },
+                                    itemBuilder: (BuildContext context) => [
+                                      PopupMenuItem(
+                                        value: 'modifica',
+                                        child: Row(
+                                          children: const [
+                                            Icon(Icons.edit, size: 18),
+                                            SizedBox(width: 8),
+                                            Text('Modifica'),
+                                          ],
+                                        ),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'elimina',
+                                        child: Row(
+                                          children: const [
+                                            Icon(Icons.delete, size: 18),
+                                            SizedBox(width: 8),
+                                            Text('Elimina'),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -154,41 +214,96 @@ Expanded(
 
         // Contenuto principale
         Expanded(
-          child: taskColumns.isNotEmpty
-              ? SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: taskColumns.map((column) {
-                      return Container(
-                        width: 300,
-                        child: TaskColumn(
-                          id: column.id,
-                          title: column.title,
-                          tasks: column.tasks,
-                          onMoveTask: onMoveTask,
-                          onAddTask: () =>
-                              navigateToAddTaskPage(context, column.id),
-                          onRemoveTask: onRemoveTask,
-                          onTaskTap: onTaskTap,
-                          onDuplicateTask: onDuplicateTask,
-                          onRemoveColumn: onRemoveColumn,
-                          onDuplicateColumn: onDuplicateColumn,
-                          onEditTask: (task) =>
-                              navigateToAddTaskPage(context, column.id, task: task),
-                        ),
-                      );
-                    }).toList(),
+          child: Container(
+            color: Colors
+                .white, // Imposta lo sfondo bianco per il contenuto principale
+            child: taskColumns.isNotEmpty
+                ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: taskColumns.map((column) {
+                        return Container(
+                          width: 300,
+                          child: TaskColumn(
+                            id: column.id,
+                            title: column.title,
+                            tasks: column.tasks,
+                            onMoveTask: onMoveTask,
+                            onAddTask: () =>
+                                navigateToAddTaskPage(context, column.id),
+                            onRemoveTask: onRemoveTask,
+                            onTaskTap: onTaskTap,
+                            onDuplicateTask: onDuplicateTask,
+                            onRemoveColumn: onRemoveColumn,
+                            onDuplicateColumn: onDuplicateColumn,
+                            onEditTask: (task) => navigateToAddTaskPage(
+                                context, column.id,
+                                task: task),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      'Nessuna lista di task trovata per questa bacheca.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
                   ),
-                )
-              : Center(
-                  child: Text(
-                    'Nessuna lista di task trovata per questa bacheca.',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                  ),
-                ),
-        ),
+          ),
+        )
       ],
+    );
+  }
+
+  /// Mostra un dialog per modificare una board
+  void _showEditBoardDialog(BuildContext context, Board board) {
+    final TextEditingController nameController =
+        TextEditingController(text: board.name);
+    final TextEditingController descriptionController =
+        TextEditingController(text: board.description);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Modifica Bacheca'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Nome Bacheca'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration:
+                    const InputDecoration(labelText: 'Descrizione Bacheca'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final updatedBoard = Board(
+                  id: board.id,
+                  name: nameController.text,
+                  description: descriptionController.text,
+                  databaseId: board.databaseId
+                );
+                onEditBoard(updatedBoard);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Salva'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
