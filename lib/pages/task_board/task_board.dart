@@ -25,6 +25,10 @@ class _TaskBoardState extends State<TaskBoard> {
   Board? currentBoard; // Board attualmente selezionata
   String currentBoardId = 'my_board';
   bool _isMenuOpen = false; // Indica se il menu laterale è aperto
+List<TaskColumnData> originalTaskColumns = []; // Nuova lista per mantenere i dati originali
+List<Label> availableLabels = []; // Elenco delle etichette disponibili
+List<Label> selectedLabels = []; // Elenco delle etichette selezionate
+bool matchAllLabels = false; // Indica se devono essere soddisfatte tutte le etichette
 
   List<Label> labels = [];
   List<Member> members = [
@@ -58,21 +62,34 @@ class _TaskBoardState extends State<TaskBoard> {
     _loadBoardsFromDatabase(); // Carica le board
   }
 
-  Future<void> _loadTasksFromDatabase() async {
-    try {
-      final loadedColumns = await loadTasksFromDatabase(
-        widget.token,
-        widget.dbName,
-        currentBoardId,
-      );
+Future<void> _loadTasksFromDatabase() async {
+  try {
+    final loadedColumns = await loadTasksFromDatabase(
+      widget.token,
+      widget.dbName,
+      currentBoardId,
+    );
 
-      setState(() {
-        taskColumns = loadedColumns;
-      });
-    } catch (e) {
-      print("Errore durante il caricamento dei task: $e");
-    }
+    setState(() {
+      taskColumns = loadedColumns;
+      originalTaskColumns = List.from(loadedColumns);
+
+      // Estrai etichette uniche dai task
+      final labelSet = <String, Label>{};
+      for (final column in loadedColumns) {
+        for (final task in column.tasks) {
+          for (final label in task.labels) {
+            labelSet[label.name] = label;
+          }
+        }
+      }
+      availableLabels = labelSet.values.toList();
+    });
+  } catch (e) {
+    print("Errore durante il caricamento dei task: $e");
   }
+}
+
 
   Future<void> _saveTaskColumnToDatabase(TaskColumnData column) async {
     try {
@@ -350,19 +367,285 @@ class _TaskBoardState extends State<TaskBoard> {
     );
   }
 
+
+
+
+
+
+void _showFilterDialog(BuildContext context) {
+  String keyword = ''; // Parola chiave
+  bool showNoMembers = true;
+  bool showAssignedToMe = true;
+  bool showNoDueDate = true;
+  bool showOverdue = false;
+  bool showDueTomorrow = false;
+  bool matchAllLabels = false; // Indica se devono essere soddisfatte tutte le etichette
+  List<Label> selectedLabels = []; // Etichette selezionate
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16), // Angoli arrotondati
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Titolo del dialog
+                    const Text(
+                      'Filtro',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Filtro per parola chiave
+                    const Text('Parola Chiave'),
+                    TextField(
+                      onChanged: (value) => keyword = value,
+                      decoration: const InputDecoration(
+                        hintText: 'Inserisci una parola chiave...',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Filtro per membri
+                    const Text('Membri'),
+                    CheckboxListTile(
+                      value: showNoMembers,
+                      onChanged: (value) => setState(() => showNoMembers = value!),
+                      title: const Text('Nessun membro'),
+                    ),
+                    CheckboxListTile(
+                      value: showAssignedToMe,
+                      onChanged: (value) => setState(() => showAssignedToMe = value!),
+                      title: const Text('Schede assegnate a me'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Filtro per data di scadenza
+                    const Text('Data di Scadenza'),
+                    CheckboxListTile(
+                      value: showNoDueDate,
+                      onChanged: (value) => setState(() => showNoDueDate = value!),
+                      title: const Text('Nessuna scadenza'),
+                    ),
+                    CheckboxListTile(
+                      value: showOverdue,
+                      onChanged: (value) => setState(() => showOverdue = value!),
+                      title: const Text('Scaduto'),
+                    ),
+                    CheckboxListTile(
+                      value: showDueTomorrow,
+                      onChanged: (value) => setState(() => showDueTomorrow = value!),
+                      title: const Text('In scadenza domani'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Filtro per etichette
+                    const Text('Etichette'),
+                    CheckboxListTile(
+                      value: matchAllLabels,
+                      onChanged: (value) => setState(() => matchAllLabels = value!),
+                      title: const Text('Richiedi tutte le etichette'),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Lista scrollabile delle etichette
+                    Container(
+                      height: 200, // Altezza limitata della lista
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: availableLabels.length,
+                        itemBuilder: (context, index) {
+                          final label = availableLabels[index];
+                          final isSelected = selectedLabels.contains(label);
+                          return CheckboxListTile(
+                            value: isSelected,
+                            onChanged: (selected) {
+                              setState(() {
+                                if (selected!) {
+                                  selectedLabels.add(label);
+                                } else {
+                                  selectedLabels.remove(label);
+                                }
+                              });
+                            },
+                            title: Row(
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: label.color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(label.name),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Pulsanti di azione
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Pulsante per annullare
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Annulla'),
+                        ),
+                        // Pulsante per reimpostare i filtri
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              taskColumns = List.from(originalTaskColumns); // Ripristina dati originali
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Reimposta'),
+                        ),
+                        // Pulsante per applicare i filtri
+                        ElevatedButton(
+                          onPressed: () {
+                            _applyFilters(
+                              keyword,
+                              showNoMembers,
+                              showAssignedToMe,
+                              showNoDueDate,
+                              showOverdue,
+                              showDueTomorrow,
+                              selectedLabels,
+                              matchAllLabels,
+                            );
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Applica'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+void _applyFilters(
+  String keyword,
+  bool showNoMembers,
+  bool showAssignedToMe,
+  bool showNoDueDate,
+  bool showOverdue,
+  bool showDueTomorrow,
+  List<Label> selectedLabels,
+  bool matchAllLabels, // Nuovo parametro per indicare il tipo di filtro sulle etichette
+) {
+  setState(() {
+    taskColumns = originalTaskColumns.map((column) {
+      final filteredTasks = column.tasks.where((task) {
+        // Filtra per parola chiave
+        if (keyword.isNotEmpty && !task.description.contains(keyword)) {
+          return false;
+        }
+
+        // Filtra per membri
+        if (!showNoMembers && task.members.isEmpty) return false;
+        if (!showAssignedToMe && task.members.any((m) => m.name == 'Me')) {
+          return false;
+        }
+
+        // Filtra per date
+        DateTime? dueDate;
+        if (task.dueDate.isNotEmpty) {
+          dueDate = DateTime.tryParse(task.dueDate); // Prova a convertire la data
+        }
+
+        if (showNoDueDate && dueDate != null) {
+          // Escludi task con scadenza impostata
+          return false;
+        }
+
+        if (showOverdue) {
+          // Mostra solo task scaduti
+          if (dueDate == null || dueDate.isAfter(DateTime.now())) {
+            return false;
+          }
+        }
+
+        if (showDueTomorrow) {
+          // Mostra solo task con scadenza esattamente domani
+          final tomorrow = DateTime.now().add(const Duration(days: 1));
+          if (dueDate == null || 
+              dueDate.year != tomorrow.year || 
+              dueDate.month != tomorrow.month || 
+              dueDate.day != tomorrow.day) {
+            return false;
+          }
+        }
+        // Filtra per etichette
+        if (selectedLabels.isNotEmpty) {
+          final taskLabels = task.labels.toSet();
+          if (matchAllLabels) {
+            // Deve soddisfare tutte le etichette selezionate
+            if (!selectedLabels.every((label) => taskLabels.contains(label))) {
+              return false;
+            }
+          } else {
+            // Deve soddisfare almeno una delle etichette selezionate
+            if (!selectedLabels.any((label) => taskLabels.contains(label))) {
+              return false;
+            }
+          }
+        }
+
+        return true;
+      }).toList();
+
+      return TaskColumnData(
+        column.boardId,
+        column.title,
+        filteredTasks,
+        id: column.id,
+        databaseId: column.databaseId,
+      );
+    }).toList();
+  });
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: TaskBoardAppBar(
-        isMenuOpen: _isMenuOpen,
-        onMenuToggle: () {
-          setState(() {
-            _isMenuOpen = !_isMenuOpen;
-          });
-        },
-        onCreateBoard: _showCreateBoardDialog,
-        onAddTaskList: () => _showAddTaskColumnDialog(context),
-      ),
+  isMenuOpen: _isMenuOpen,
+  onMenuToggle: () {
+    setState(() {
+      _isMenuOpen = !_isMenuOpen;
+    });
+  },
+  onCreateBoard: _showCreateBoardDialog,
+  onAddTaskList: () => _showAddTaskColumnDialog(context),
+  onOpenFilter: () => _showFilterDialog(context), // Nuovo callback
+),
       body: TaskBoardBody(
         isMenuOpen: _isMenuOpen,
         boards: boards,
