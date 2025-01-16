@@ -7,6 +7,7 @@ import 'package:flutter_app/document_manager/documents_utils.dart';
 import 'package:flutter_app/document_manager/file_manager_service.dart';
 import 'package:flutter_app/pages/task_board/components/workspace_helpers.dart';
 import 'dart:html' as html;  // Importa dart:html per aprire una nuova finestra
+
 import 'user_manager/user_model.dart';
 import 'databases_manager/database_pages.dart';
 import 'pages/calendar/calendar.dart';
@@ -54,6 +55,14 @@ class _HomePageState extends State<HomePage> {
   Workspace? selectedWorkspace;
   List<String> availableDatabases = []; // Lista dei database disponibili
 
+  /*@override
+  void initState() {
+    super.initState();
+    if (widget.user.databases.isNotEmpty) {
+      selectedDatabase = widget.user.databases.first.dbName.replaceFirst('${widget.user.username}-', ''); // Seleziona il primo database come predefinito
+    }
+  }*/
+
   @override
 void initState() {
   super.initState();
@@ -61,40 +70,115 @@ void initState() {
   _loadAvailableDatabases(); // Carica i database disponibili
 }
 
-Future<void> _loadWorkspaces() async {
-  final loadedWorkspaces = await loadWorkspaces(
-    token: widget.token.accessToken,
-    dbName: 'appData',
-  );
-  setState(() {
-    workspaces = loadedWorkspaces;
-    if (workspaces.isNotEmpty) {
-      selectedWorkspace = workspaces.first;
+  /// Carica gli spazi di lavoro dal database
+  Future<void> _loadWorkspaces() async {
+    try {
+      final loadedWorkspaces = await loadWorkspacesFromDatabase(
+        widget.token.accessToken,
+        'appData',
+      );
+      setState(() {
+        workspaces = loadedWorkspaces;
+        if (workspaces.isNotEmpty) {
+          selectedWorkspace = workspaces.first;
+        }
+      });
+    } catch (error) {
+      print("Errore durante il caricamento degli spazi di lavoro: $error");
     }
-  });
-}
+  }
 
-Future<void> _loadAvailableDatabases() async {
-  final databases = await loadAvailableDatabases(
-    databases: widget.user.databases,
-  );
-  setState(() {
-    availableDatabases = databases;
-  });
-}
+  /// Carica l'elenco dei database disponibili
+  Future<void> _loadAvailableDatabases() async {
+    try {
+      final databases = widget.user.databases;
+      setState(() {
+        availableDatabases = databases.map((db) => db.dbName).toList();
+      });
+    } catch (error) {
+      print("Errore durante il caricamento dei database disponibili: $error");
+    }
+  }
 
+  /// Mostra un dialog per creare o modificare uno spazio di lavoro
+  Future<void> _showWorkspaceDialog({Workspace? workspace}) async {
+    final nameController = TextEditingController(text: workspace?.name ?? '');
+    final descriptionController = TextEditingController(text: workspace?.description ?? '');
+    String? selectedDatabase = workspace?.associatedDatabase ?? (availableDatabases.isNotEmpty ? availableDatabases.first : null);
 
-Future<void> _showWorkspaceDialog({Workspace? workspace}) async {
-  await showWorkspaceDialog(
-    context: context,
-    user: widget.user,
-    workspace: workspace,
-    availableDatabases: availableDatabases,
-    token: widget.token.accessToken,
-    onWorkspaceSaved: _loadWorkspaces,
-  );
-}
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(workspace == null ? "Crea Spazio di Lavoro" : "Modifica Spazio di Lavoro"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Nome"),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Descrizione"),
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedDatabase,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+                decoration: const InputDecoration(labelText: "Database Associato"),
+                dropdownColor: Colors.grey[200],
+                items: availableDatabases.map((db) {
+                  return DropdownMenuItem<String>(
+                    value: db,
+                    child: Text(
+                      db.replaceFirst('${widget.user.username}-', ''),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  selectedDatabase = value;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Annulla"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isEmpty || selectedDatabase == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Nome e database associato sono obbligatori.")),
+                  );
+                  return;
+                }
+                final newWorkspace = Workspace(
+                  id: workspace?.id ?? UniqueKey().toString(),
+                  name: nameController.text,
+                  description: descriptionController.text,
+                  associatedDatabase: selectedDatabase!,
+                  databaseId: workspace?.databaseId,
+                );
 
+                if (workspace == null) {
+                  await saveWorkspaceToDatabase(widget.token.accessToken, 'appData', newWorkspace);
+                } else {
+                  await updateWorkspaceInDatabase(widget.token.accessToken, 'appData', newWorkspace);
+                }
+
+                await _loadWorkspaces();
+                Navigator.of(context).pop();
+              },
+              child: Text(workspace == null ? "Crea" : "Salva"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

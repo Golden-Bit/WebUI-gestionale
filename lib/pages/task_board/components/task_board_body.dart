@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/task_board/components/task_board_class.dart';
+import 'package:flutter_app/pages/task_board/components/tasks_calendar_view.dart';
 import 'package:flutter_app/pages/task_board/components/task_column.dart';
 import 'package:flutter_app/pages/task_board/components/task_class.dart';
+import 'package:flutter_app/pages/task_board/components/tasks_table_view.dart';
+import 'package:flutter_app/pages/task_board/components/top_bar.dart';
 
 class TaskBoardBody extends StatelessWidget {
   final bool isMenuOpen; // Indica se il menu laterale è aperto
@@ -25,6 +28,13 @@ class TaskBoardBody extends StatelessWidget {
       navigateToAddTaskPage; // Navigazione per aggiungere un task
   final Function(Board) onEditBoard; // Callback per modificare una board
   final Function(Board) onDeleteBoard; // Callback per eliminare una board
+  final VoidCallback onOpenFilter; // Callback aggiunto
+
+  /// Vista corrente (Bacheca, Tabella, Calendario)
+  final BoardView currentView;
+
+  /// Callback per cambiare la vista
+  final Function(BoardView) onViewSelected;
 
   const TaskBoardBody({
     Key? key,
@@ -45,6 +55,9 @@ class TaskBoardBody extends StatelessWidget {
     required this.navigateToAddTaskPage,
     required this.onEditBoard,
     required this.onDeleteBoard,
+    required this.onOpenFilter,
+    required this.currentView,
+    required this.onViewSelected,
   }) : super(key: key);
 
   @override
@@ -57,13 +70,20 @@ class TaskBoardBody extends StatelessWidget {
             elevation: 6, // Elevazione per aggiungere ombra
             child: Container(
               width: 300,
-              color: Colors.white, // Sfondo bianco per il menu
+              decoration: const BoxDecoration(
+                color: Colors.white, // Sfondo bianco per il menu
+                border: Border(
+                  right: BorderSide(
+                      color: Colors.grey,
+                      width: 1), // Bordo destro grigio sottile
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Sezione: "Bacheche"
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
                     child: Text(
                       'Bacheche',
                       style: TextStyle(
@@ -76,8 +96,8 @@ class TaskBoardBody extends StatelessWidget {
                   const Divider(color: Colors.black45), // Separatore scuro
 
                   // Sezione: "Viste dello spazio di lavoro"
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
                       'Viste dello spazio di lavoro',
                       style: TextStyle(
@@ -88,20 +108,23 @@ class TaskBoardBody extends StatelessWidget {
                     ),
                   ),
                   ListTile(
-                    leading: Icon(Icons.table_chart, color: Colors.black),
-                    title:
-                        Text('Tabella', style: TextStyle(color: Colors.black)),
-                    onTap: () {
-                      // Logica per Tabella
-                    },
+                    leading: const Icon(Icons.view_column, color: Colors.black),
+                    title: const Text('Bacheca',
+                        style: TextStyle(color: Colors.black)),
+                    onTap: () => onViewSelected(BoardView.board),
                   ),
                   ListTile(
-                    leading: Icon(Icons.calendar_today, color: Colors.black),
-                    title: Text('Calendario',
+                    leading: const Icon(Icons.table_chart, color: Colors.black),
+                    title: const Text('Tabella',
                         style: TextStyle(color: Colors.black)),
-                    onTap: () {
-                      // Logica per Calendario
-                    },
+                    onTap: () => onViewSelected(BoardView.table),
+                  ),
+                  ListTile(
+                    leading:
+                        const Icon(Icons.calendar_today, color: Colors.black),
+                    title: const Text('Calendario',
+                        style: TextStyle(color: Colors.black)),
+                    onTap: () => onViewSelected(BoardView.calendar),
                   ),
                   const Divider(color: Colors.black45), // Separatore scuro
 
@@ -112,7 +135,7 @@ class TaskBoardBody extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        const Text(
                           'Le tue bacheche',
                           style: TextStyle(
                             color: Colors.black,
@@ -121,7 +144,7 @@ class TaskBoardBody extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.add, color: Colors.black),
+                          icon: const Icon(Icons.add, color: Colors.black),
                           onPressed: onCreateBoard,
                         ),
                       ],
@@ -178,20 +201,20 @@ class TaskBoardBody extends StatelessWidget {
                                       }
                                     },
                                     itemBuilder: (BuildContext context) => [
-                                      PopupMenuItem(
+                                      const PopupMenuItem(
                                         value: 'modifica',
                                         child: Row(
-                                          children: const [
+                                          children: [
                                             Icon(Icons.edit, size: 18),
                                             SizedBox(width: 8),
                                             Text('Modifica'),
                                           ],
                                         ),
                                       ),
-                                      PopupMenuItem(
+                                      const PopupMenuItem(
                                         value: 'elimina',
                                         child: Row(
-                                          children: const [
+                                          children: [
                                             Icon(Icons.delete, size: 18),
                                             SizedBox(width: 8),
                                             Text('Elimina'),
@@ -212,47 +235,93 @@ class TaskBoardBody extends StatelessWidget {
             ),
           ),
 
-        // Contenuto principale
-        Expanded(
-          child: Container(
-            color: Colors
-                .white, // Imposta lo sfondo bianco per il contenuto principale
-            child: taskColumns.isNotEmpty
-                ? SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: taskColumns.map((column) {
-                        return Container(
-                          width: 300,
-                          child: TaskColumn(
-                            id: column.id,
-                            title: column.title,
-                            tasks: column.tasks,
-                            onMoveTask: onMoveTask,
-                            onAddTask: () =>
-                                navigateToAddTaskPage(context, column.id),
-                            onRemoveTask: onRemoveTask,
-                            onTaskTap: onTaskTap,
-                            onDuplicateTask: onDuplicateTask,
-                            onRemoveColumn: onRemoveColumn,
-                            onDuplicateColumn: onDuplicateColumn,
-                            onEditTask: (task) => navigateToAddTaskPage(
-                                context, column.id,
-                                task: task),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      'Nessuna lista di task trovata per questa bacheca.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                    ),
-                  ),
+// Contenuto principale
+Expanded(
+  child: Stack(
+    children: [
+      // Sfondo bianco
+      Container(color: Colors.white),
+
+      Column(
+        children: [
+          // Riquadro superiore
+          TopBarWidget(
+            boardName: currentBoard?.name ?? 'Nessuna Board',
+            onVisibilityPressed: () {
+              // Logica per il pulsante Visibilità
+            },
+            onFilterPressed: onOpenFilter,
+            currentView: currentView,
+            onViewSelected: onViewSelected,
           ),
-        )
+
+          // Contenuto principale dinamico
+          Expanded(
+            child: Container(
+              width: double.infinity, // Assicura che occupi tutta la larghezza
+              child: Builder(
+                builder: (context) {
+                  if (currentView == BoardView.board) {
+                    // Vista Bacheca
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Container(
+                        width: double.infinity, // Larghezza completa
+                        child: Row(
+                          children: taskColumns.map((column) {
+                            return Container(
+                              width: 300,
+                              margin: const EdgeInsets.only(left: 8.0),
+                              child: TaskColumn(
+                                id: column.id,
+                                title: column.title,
+                                tasks: column.tasks,
+                                onMoveTask: onMoveTask,
+                                onAddTask: () =>
+                                    navigateToAddTaskPage(context, column.id),
+                                onRemoveTask: onRemoveTask,
+                                onTaskTap: onTaskTap,
+                                onDuplicateTask: onDuplicateTask,
+                                onRemoveColumn: onRemoveColumn,
+                                onDuplicateColumn: onDuplicateColumn,
+                                onEditTask: (task) =>
+                                    navigateToAddTaskPage(context, column.id,
+                                        task: task),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  } else if (currentView == BoardView.table) {
+                    // Vista Tabella
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Container(
+                        width: double.infinity, // Larghezza completa
+                        child: TaskTableView(taskColumns: taskColumns),
+                      ),
+                    );
+                  } else if (currentView == BoardView.calendar) {
+  return CustomTaskCalendar(
+    tasks: taskColumns
+        .expand((column) => column.tasks) // Combina tutti i task
+        .toList(),
+    onTaskTap: onTaskTap, // Callback per interagire con i task
+  );
+} else {
+                    return const SizedBox.shrink();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
+
       ],
     );
   }
@@ -294,7 +363,7 @@ class TaskBoardBody extends StatelessWidget {
                   id: board.id,
                   name: nameController.text,
                   description: descriptionController.text,
-                  databaseId: board.databaseId
+                  databaseId: board.databaseId,
                 );
                 onEditBoard(updatedBoard);
                 Navigator.of(context).pop();

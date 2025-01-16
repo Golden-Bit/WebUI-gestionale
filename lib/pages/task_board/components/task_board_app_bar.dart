@@ -5,78 +5,233 @@ class TaskBoardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onMenuToggle;
   final VoidCallback onCreateBoard;
   final VoidCallback onAddTaskList;
-  final VoidCallback onOpenFilter; // Callback per aprire il filtro
+  final VoidCallback onOpenFilter;
+  final Function(String) onSearchQueryChanged; // Callback per la ricerca
+  final FocusNode searchFocusNode; // FocusNode per il campo di ricerca
 
-  TaskBoardAppBar({
+  const TaskBoardAppBar({
+    Key? key,
     required this.isMenuOpen,
     required this.onMenuToggle,
     required this.onCreateBoard,
     required this.onAddTaskList,
-    required this.onOpenFilter, // Aggiunto il nuovo parametro
-  });
+    required this.onOpenFilter,
+    required this.onSearchQueryChanged,
+    required this.searchFocusNode, // FocusNode passato come parametro
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      elevation: 4, // Aggiunge l'elevazione per l'ombreggiatura
-      backgroundColor: Colors.white, // Sfondo bianco per l'AppBar
-      shadowColor: Colors.black, // Colore dell'ombra
-      leadingWidth: 100, // Imposta la larghezza del lato sinistro
+      elevation: 4,
+      backgroundColor: Colors.white,
+      shadowColor: Colors.black,
+      leadingWidth: 100,
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black), // Freccia indietro nera
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () => Navigator.of(context).pop(),
           ),
           IconButton(
             icon: Icon(
               isMenuOpen ? Icons.close : Icons.menu,
               color: Colors.black,
-            ), // Simbolo hamburger o chiudi
+            ),
             onPressed: onMenuToggle,
           ),
         ],
       ),
-      title: const Text(
-        'Task Board',
-        style: TextStyle(color: Colors.black), // Testo nero
-      ),
-      centerTitle: false, // Mantiene il titolo allineato a sinistra
-      actions: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
+      title: Row(
+        children: [
+          const Text(
+            'Task Board',
+            style: TextStyle(color: Colors.black),
+          ),
+          const SizedBox(width: 16), // Spazio tra il titolo e i pulsanti
+          _DropdownButtonWithMenu(
+            label: 'Spazi di lavoro',
+            items: ['Opzione 1', 'Opzione 2', 'Opzione 3'], // Elementi del menu
+            onSelected: (value) {
+              print('Selezionato in "Spazi di lavoro": $value');
+            },
+          ),
+          const SizedBox(width: 16),
+          _DropdownButtonWithMenu(
+            label: 'Recenti',
+            items: ['Progetto 1', 'Progetto 2', 'Progetto 3'],
+            onSelected: (value) {
+              print('Selezionato in "Recenti": $value');
+            },
+          ),
+          const SizedBox(width: 16),
+          _DropdownButtonWithMenu(
+            label: 'Preferita',
+            items: ['Preferito 1', 'Preferito 2', 'Preferito 3'],
+            onSelected: (value) {
+              print('Selezionato in "Preferita": $value');
+            },
+          ),
+          const SizedBox(width: 16),
+          _DropdownButtonWithMenu(
+            label: 'Modelli',
+            items: ['Modello 1', 'Modello 2', 'Modello 3'],
+            onSelected: (value) {
+              print('Selezionato in "Modelli": $value');
+            },
+          ),
+          //const SizedBox(width: 16),
+Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text(
               'Crea Board',
               style: TextStyle(color: Colors.white),
             ),
-            onPressed: onCreateBoard, // Callback per creare una board
+            onPressed: onCreateBoard,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0), // Aggiunge padding
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text(
               'Crea Task List',
               style: TextStyle(color: Colors.white),
             ),
-            onPressed: onAddTaskList, // Callback per aggiungere una lista di task
+            onPressed: onAddTaskList,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[700]),
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.filter_alt, color: Colors.black), // Icona filtro
-          onPressed: onOpenFilter, // Callback per aprire il dialog di filtro
-          tooltip: 'Filtra Task', // Tooltip per maggiore chiarezza
+        ],
+      ),
+      centerTitle: false,
+      actions: [
+        // Barra di ricerca
+        Container(
+          width: 240,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFDDDDDD)),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: TextField(
+            focusNode: searchFocusNode, // Usa il FocusNode
+            textAlignVertical: TextAlignVertical.center,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              prefixIcon: const Icon(Icons.search, color: Colors.black),
+              hintText: 'Ricerca',
+              border: InputBorder.none,
+            ),
+            onChanged: onSearchQueryChanged, // Notifica i cambiamenti della query
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.circle,
+          ),
+          /*child: IconButton(
+            icon: const Icon(Icons.filter_alt, color: Colors.white),
+            onPressed: onOpenFilter,
+            tooltip: 'Filtra Task',
+          ),*/
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+            onPressed: () {},
+            tooltip: 'Notifiche',
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
+            onPressed: () {},
+            tooltip: 'Info',
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Text(
+              'IE',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onPressed: () {},
+            tooltip: 'Utente',
+          ),
         ),
       ],
     );
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _DropdownButtonWithMenu extends StatelessWidget {
+  final String label;
+  final List<String> items;
+  final Function(String) onSelected;
+
+  const _DropdownButtonWithMenu({
+    Key? key,
+    required this.label,
+    required this.items,
+    required this.onSelected,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      onSelected: onSelected,
+      itemBuilder: (BuildContext context) => items
+          .map(
+            (item) => PopupMenuItem<String>(
+              value: item,
+              child: Text(item),
+            ),
+          )
+          .toList(),
+      child: TextButton.icon(
+        onPressed: null, // Usa il PopupMenuButton per gestire i clic
+        icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.black),
+        ),
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.grey[200], // Sfondo grigio chiaro
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4), // Angoli arrotondati
+          ),
+        ),
+      ),
+    );
+  }
 }
