@@ -1,157 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/generic_object_page/generic_object_page.dart';
-import 'package:flutter_app/pages/login/login.dart';
-import 'package:flutter_app/pages/register/register.dart';
-import 'package:flutter_app/pages/settings/settings.dart';
+import 'package:flutter_app/databases_manager/database_pages.dart';
 import 'package:flutter_app/document_manager/documents_utils.dart';
 import 'package:flutter_app/document_manager/file_manager_service.dart';
+import 'package:flutter_app/esg_data_manager/euroistat.dart';
+import 'package:flutter_app/esg_data_manager/yahoo_finance.dart';
+import 'package:flutter_app/pages/calendar/calendar.dart';
+import 'package:flutter_app/pages/contacts/contacts.dart';
+import 'package:flutter_app/pages/generic_object_page/generic_object_page.dart';
+import 'package:flutter_app/pages/products/products.dart';
+import 'package:flutter_app/pages/services/services.dart';
+import 'package:flutter_app/pages/settings/settings.dart';
+import 'package:flutter_app/pages/task_board/task_board.dart';
 import 'package:flutter_app/pages/task_board/components/workspace_helpers.dart';
-import 'dart:html' as html; // Importa dart:html per aprire una nuova finestra
-import 'user_manager/user_model.dart';
-import 'databases_manager/database_pages.dart';
-import 'pages/calendar/calendar.dart';
-import 'pages/task_board/task_board.dart';
-import 'pages/contacts/contacts.dart';
-import 'pages/products/products.dart';
-import 'pages/services/services.dart';
-import 'esg_data_manager/euroistat.dart';
-import 'esg_data_manager/yahoo_finance.dart';
-import 'package:flutter_app/components/workspace_appbar.dart';
+import 'dart:html' as html;
 
-void main() {
-  runApp(MyApp());
-}
+import 'package:flutter_app/user_manager/user_model.dart';
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'User Management',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: LoginPage(),
-      routes: {
-        '/login': (context) => LoginPage(),
-        '/register': (context) => RegisterPage(),
-      },
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  final User user;
+class WorkspaceBody extends StatelessWidget {
+  final Workspace? selectedWorkspace;
   final Token token;
+  final User user;
 
-  HomePage({required this.user, required this.token});
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  List<Workspace> workspaces = [];
-  Workspace? selectedWorkspace;
-  List<String> availableDatabases = []; // Lista dei database disponibili
-  bool _isMenuOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWorkspaces(); // Carica gli spazi di lavoro
-    _loadAvailableDatabases(); // Carica i database disponibili
-  }
-
-  Future<void> _loadWorkspaces() async {
-    final loadedWorkspaces = await loadWorkspaces(
-      token: widget.token.accessToken,
-      dbName: 'appData',
-    );
-    setState(() {
-      workspaces = loadedWorkspaces;
-      if (workspaces.isNotEmpty) {
-        selectedWorkspace = workspaces.first;
-      }
-    });
-  }
-
-  Future<void> _loadAvailableDatabases() async {
-    final databases = await loadAvailableDatabases(
-      databases: widget.user.databases,
-    );
-    setState(() {
-      availableDatabases = databases;
-    });
-  }
-
-  Future<void> _showWorkspaceDialog({Workspace? workspace}) async {
-    await showWorkspaceDialog(
-      context: context,
-      user: widget.user,
-      workspace: workspace,
-      availableDatabases: availableDatabases,
-      token: widget.token.accessToken,
-      onWorkspaceSaved: _loadWorkspaces,
-    );
-  }
-
-  void _toggleMenu() {
-    setState(() {
-      _isMenuOpen = !_isMenuOpen;
-    });
-  }
-
-  void _createBoard() {
-    print('Creazione di una nuova board');
-    // Logica per la creazione di una nuova board
-  }
-
-  void _createTaskList() {
-    print('Creazione di una nuova task list');
-    // Logica per la creazione di una nuova task list
-  }
-
-  void _openFilter() {
-    print('Apertura del filtro');
-    // Logica per il filtro
-  }
+  const WorkspaceBody({
+    Key? key,
+    required this.selectedWorkspace,
+    required this.user,
+    required this.token,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: WorkspaceAppBar(
-        selectedWorkspace: selectedWorkspace,
-        workspaces: workspaces,
-        onWorkspaceChanged: (workspace) {
-          setState(() {
-            selectedWorkspace = workspace;
-          });
-        },
-        onAddWorkspace: () => _showWorkspaceDialog(),
-        onMenuToggle: _toggleMenu, // Per la gestione del menu laterale
-        isMenuOpen: _isMenuOpen,
-        onCreateBoard: _createBoard,
-        onAddTaskList: _createTaskList,
-        onOpenFilter: _openFilter,
-        onSearchQueryChanged: (query) {
-          print('Query di ricerca: $query');
-        },
-        searchFocusNode: FocusNode(),
-      ),
-      body: Center(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            double gridWidth =
-                constraints.maxWidth < 400 ? constraints.maxWidth : 400;
-            return Container(
-              width: gridWidth,
-              child: GridView.count(
-                crossAxisCount: 3,
-                childAspectRatio: 1,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                padding: const EdgeInsets.all(16.0),
-                children: [
+    return Center(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          double gridWidth = constraints.maxWidth < 400 ? constraints.maxWidth : 400;
+          return Container(
+            width: gridWidth,
+            child: GridView.count(
+              crossAxisCount: 3,
+              childAspectRatio: 1,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              padding: const EdgeInsets.all(16.0),
+              children: [
                   _buildGridCard(
                     context,
                     icon: Icons.settings,
@@ -160,8 +51,8 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AccountSettingsPage(
-                              user: widget.user, token: widget.token),
+                          builder: (context) =>
+                              AccountSettingsPage(user: user, token: token),
                         ),
                       );
                     },
@@ -174,10 +65,8 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DatabasePage(
-                              databases: widget.user.databases,
-                              token: widget.token.accessToken,
-                              user: widget.user),
+                          builder: (context) =>
+                              DatabasePage(databases: user.databases, token: token.accessToken, user: user),
                         ),
                       );
                     },
@@ -191,7 +80,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => CalendarComponent(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -207,7 +96,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => TaskBoard(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -223,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ContactManagerPage(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -239,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ProductManagerPage(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -255,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ServiceManagerPage(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -271,7 +160,7 @@ class _HomePageState extends State<HomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => GenericObjectPage(
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -289,7 +178,7 @@ class _HomePageState extends State<HomePage> {
                           builder: (context) => DocumentManagerHomePage(
                             currentFolder: FolderInfo.root(),
                             path: "Root",
-                            token: widget.token.accessToken,
+                            token: token.accessToken,
                             dbName: selectedWorkspace?.associatedDatabase ?? '',
                           ),
                         ),
@@ -330,19 +219,20 @@ class _HomePageState extends State<HomePage> {
                       html.window.open('http://localhost:59868', '_blank');
                     },
                   ),
-                ],
-              ),
-            );
-          },
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildGridCard(BuildContext context,
-      {required IconData icon,
-      required String label,
-      required VoidCallback onTap}) {
+  Widget _buildGridCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: StatefulBuilder(
@@ -357,7 +247,7 @@ class _HomePageState extends State<HomePage> {
               setState(() => isHovered = false);
             },
             child: AnimatedContainer(
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               transform: Matrix4.identity()..scale(isHovered ? 1.05 : 1.0),
               curve: Curves.easeInOut,
               child: Card(
@@ -365,15 +255,15 @@ class _HomePageState extends State<HomePage> {
                 child: GestureDetector(
                   onTap: onTap,
                   child: Container(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(icon, size: 32.0),
-                        SizedBox(height: 4.0),
+                        const SizedBox(height: 4.0),
                         Text(
                           label,
-                          style: TextStyle(fontSize: 12.0),
+                          style: const TextStyle(fontSize: 12.0),
                           textAlign: TextAlign.center,
                         ),
                       ],
