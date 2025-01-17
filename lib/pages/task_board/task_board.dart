@@ -834,5 +834,3 @@ dynamic _changeView(BoardView view) {
     );
   }
 }
-
-//enum BoardView { board, table, calendar }

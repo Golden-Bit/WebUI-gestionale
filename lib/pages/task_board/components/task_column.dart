@@ -215,9 +215,16 @@ class _TaskColumnState extends State<TaskColumn> {
                 style: TextStyle(color: Colors.white),
               ),
               onPressed: widget.onAddTask,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[700],
-              ),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.grey[700], // Colore di sfondo
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(4.0), // Arrotonda gli angoli
+    ),
+    padding: const EdgeInsets.symmetric(
+      horizontal: 16.0, // Margini interni orizzontali
+      vertical: 12.0, // Margini interni verticali
+    ),
+  ),
             ),
           ),
         ],
