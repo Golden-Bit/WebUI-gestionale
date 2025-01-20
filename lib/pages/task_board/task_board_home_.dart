@@ -147,334 +147,242 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     );
   }
 
-Widget _buildSidebar() {
-  return Container(
-    width: 250,
-    color: Colors.grey[100],
-    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Pulsanti principali in alto
-        SidebarButton(
-          index: 0,
-          icon: Icons.dashboard,
-          title: "Bacheche",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index; // Aggiorna il pulsante selezionato
-            });
-          },
-        ),
-        SidebarButton(
-          index: 1,
-          icon: Icons.bookmark_border,
-          title: "Modelli",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-        ),
-        SidebarButton(
-          index: 2,
-          icon: Icons.home_outlined,
-          title: "Pagina iniziale",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-        ),
-        const SizedBox(height: 32),
+  Widget _buildSidebar() {
+    return Container(
+      width: 250,
+      color: Colors.grey[100],
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Pulsanti principali in alto
+          _buildSidebarButton(
+            index: 0,
+            icon: Icons.dashboard,
+            title: "Bacheche",
+          ),
+          _buildSidebarButton(
+            index: 1,
+            icon: Icons.bookmark_border,
+            title: "Modelli",
+          ),
+          _buildSidebarButton(
+            index: 2,
+            icon: Icons.home_outlined,
+            title: "Pagina iniziale",
+          ),
+          const SizedBox(height: 32),
 
-        // Generazione dinamica del menu per ogni spazio di lavoro
-        Expanded(
-          child: ListView.builder(
-            itemCount: workspaces.length,
-            itemBuilder: (context, index) {
-              final workspace = workspaces[index];
-              final isExpanded = isExpandedList[index];
-              final isHovered = ValueNotifier(false);
+          // Generazione dinamica del menu per ogni spazio di lavoro
+          Expanded(
+            child: ListView.builder(
+              itemCount: workspaces.length,
+              itemBuilder: (context, index) {
+                final workspace = workspaces[index];
+                final isExpanded =
+                    isExpandedList[index]; // Stato espanso o meno
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MouseRegion(
-                      onEnter: (_) => isHovered.value = true,
-                      onExit: (_) => isHovered.value = false,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isExpandedList[index] = !isExpandedList[index];
-                          });
-                        },
-                        child: ValueListenableBuilder(
-                          valueListenable: isHovered,
-                          builder: (context, hover, _) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 4.0),
-                              decoration: BoxDecoration(
-                                color: isExpanded
-                                    ? Colors.grey[700]
-                                    : hover
-                                        ? Colors.grey[200]
-                                        : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 30,
-                                        height: 30,
-                                        margin: const EdgeInsets.only(right: 8),
-                                        decoration: BoxDecoration(
-                                          color: _getColorForInitial(
-                                              workspace.name[0]),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            workspace.name[0],
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                return Padding(
+                    // Aggiunto padding intorno ad ogni elemento
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0), // Padding verticale
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header per ogni spazio di lavoro
+                        InkWell(
+                          onTap: () {
+                            // Espandi/collassa lo stato del menu cliccato
+                            setState(() {
+                              if (isExpandedList[index]) {
+                                isExpandedList[index] =
+                                    false; // Collassa se già espanso
+                              } else {
+                                // Collassa tutti gli altri e espandi solo quello selezionato
+                                for (int i = 0;
+                                    i < isExpandedList.length;
+                                    i++) {
+                                  isExpandedList[i] = i == index;
+                                }
+                              }
+                            });
+                          },
+                          child: Container(
+                            //color: isExpanded
+                              //  ? Colors.grey[700]
+                              //  : Colors.transparent, // Sfondo scuro se espanso
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 4.0),
+      decoration: BoxDecoration(
+        color: isExpanded
+            ? Colors.grey[700]
+            : Colors.transparent, // Sfondo scuro se selezionato
+        borderRadius: BorderRadius.circular(4),
+      ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    // Icona con l'iniziale dello spazio di lavoro
+                                    Container(
+                                      width: 30,
+                                      height: 30,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      decoration: BoxDecoration(
+                                        color: _getColorForInitial(
+                                            workspace.name[0]),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          workspace.name[0],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                      Text(
-                                        workspace.name,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: isExpanded
-                                              ? Colors.white
-                                              : Colors.black,
-                                        ),
+                                    ),
+                                    // Nome dello spazio di lavoro
+                                    Text(
+                                      workspace.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: isExpanded
+                                            ? Colors.white
+                                            : Colors
+                                                .black, // Testo bianco se selezionato
                                       ),
-                                    ],
-                                  ),
-                                  Icon(
-                                    isExpanded
-                                        ? Icons.expand_less
-                                        : Icons.expand_more,
-                                    color: isExpanded
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                    ),
+                                  ],
+                                ),
+                                Icon(
+                                  isExpanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                  color: isExpanded
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Icona bianca se selezionato
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    if (isExpanded) ...[
-                      const SizedBox(height: 16),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.table_chart,
-                        title: "Bacheche",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.collections_bookmark,
-                        title: "Raccolte",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.star,
-                        title: "Punti salienti",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.grid_view,
-                        title: "Viste",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.person,
-                        title: "Membri",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.settings,
-                        title: "Impostazioni",
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    ),
-  );
-}
 
-
-/// Funzione per creare i pulsanti principali
-/*Widget _buildSidebarButton({
-  required int index,
-  required IconData icon,
-  required String title,
-}) {
-  final isSelected = selectedIndex == index; // Verifica se è selezionato
-
-  return InkWell(
-    onTap: () {
-      setState(() {
-        selectedIndex = index; // Aggiorna il pulsante selezionato
-      });
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.grey[700]
-            : Colors.transparent, // Colore di sfondo se selezionato
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? Colors.white : Colors.grey[700],
-          ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isSelected ? Colors.white : Colors.black,
+                        // Contenuto espanso se lo stato è espanso
+                        if (isExpanded) ...[
+                          const SizedBox(height: 16),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.table_chart,
+                            title: "Bacheche",
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.collections_bookmark,
+                            title: "Raccolte",
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.star,
+                            title: "Punti salienti",
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.grid_view,
+                            title: "Viste",
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.person,
+                            title: "Membri",
+                            trailing: IconButton(
+                              onPressed: () {
+                                print("Aggiungi membro");
+                              },
+                              icon: const Icon(Icons.add),
+                            ),
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.settings,
+                            title: "Impostazioni",
+                          ),
+                          _buildSidebarWorkspaceTile(
+                            icon: Icons.attach_money,
+                            title: "Fatturazione",
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ],
+                    ));
+              },
             ),
           ),
         ],
       ),
-    ),
-  );
-}*/
+    );
+  }
 
+  Widget _buildSidebarButton({
+    required int index,
+    required IconData icon,
+    required String title,
+  }) {
+    final isSelected = selectedIndex == index;
 
-Widget _buildSidebarButton({
-  required int index,
-  required IconData icon,
-  required String title,
-}) {
-  bool isHovered = false; // Variabile locale per gestire l'hover
-
-  return MouseRegion(
-    onEnter: (_) {
-      setState(() {
-        isHovered = true;
-      });
-    },
-    onExit: (_) {
-      setState(() {
-        isHovered = false;
-      });
-    },
-    child: GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedIndex = index; // Aggiorna lo stato globale
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-        decoration: BoxDecoration(
-          color: selectedIndex == index
-              ? Colors.grey[700] // Sfondo grigio scuro se selezionato
-              : isHovered
-                  ? Colors.grey[200] // Sfondo grigio chiaro se hover
-                  : Colors.transparent, // Trasparente altrimenti
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: selectedIndex == index ? Colors.white : Colors.grey[700],
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: selectedIndex == index ? Colors.white : Colors.black,
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Colors.grey[700]
+            : Colors.transparent, // Sfondo scuro se selezionato
+        borderRadius: BorderRadius.circular(4),
       ),
-    ),
-  );
-}
-
-
-Widget _buildSidebarWorkspaceTile({
-  required IconData icon,
-  required String title,
-  int? badgeCount,
-  Widget? trailing,
-}) {
-  bool isHovered = false;
-
-  return StatefulBuilder(
-    builder: (context, setState) {
-      return MouseRegion(
-        onEnter: (_) => setState(() => isHovered = true),
-        onExit: (_) => setState(() => isHovered = false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-          decoration: BoxDecoration(
-            color: isHovered ? Colors.grey[200] : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.grey[700], size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              if (badgeCount != null)
-                CircleAvatar(
-                  backgroundColor: Colors.black,
-                  radius: 12,
-                  child: Text(
-                    badgeCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-              if (trailing != null) trailing,
-            ],
+      child: ListTile(
+        leading:
+            Icon(icon, color: isSelected ? Colors.white : Colors.grey[700]),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : Colors.black,
           ),
         ),
-      );
-    },
-  );
-}
+        onTap: () {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildSidebarWorkspaceTile({
+    required IconData icon,
+    required String title,
+    int? badgeCount,
+    Widget? trailing,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.grey[700]),
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+      trailing: badgeCount != null
+          ? CircleAvatar(
+              backgroundColor: Colors.black,
+              radius: 12,
+              child: Text(
+                badgeCount.toString(),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            )
+          : trailing,
+      onTap: () {
+        print("Cliccato su $title");
+      },
+    );
+  }
 
   /// Costruisce il contenuto principale in base al pulsante selezionato
   Widget _buildMainContent() {
@@ -786,70 +694,4 @@ Color _getColorForInitial(String initial) {
 
   // Restituisce il colore basato sull'iniziale, o un colore di default (grigio)
   return colorMap[initial.toUpperCase()] ?? Colors.grey;
-}
-
-class SidebarButton extends StatefulWidget {
-  final int index;
-  final IconData icon;
-  final String title;
-  final int selectedIndex;
-  final Function(int) onSelected;
-
-  const SidebarButton({
-    Key? key,
-    required this.index,
-    required this.icon,
-    required this.title,
-    required this.selectedIndex,
-    required this.onSelected,
-  }) : super(key: key);
-
-  @override
-  _SidebarButtonState createState() => _SidebarButtonState();
-}
-
-class _SidebarButtonState extends State<SidebarButton> {
-  bool isHovered = false; // Stato locale per l'hover
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = widget.index == widget.selectedIndex;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: GestureDetector(
-        onTap: () => widget.onSelected(widget.index),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4.0),
-          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Colors.grey[700] // Grigio scuro se selezionato
-                : isHovered
-                    ? Colors.grey[200] // Grigio chiaro se hover
-                    : Colors.transparent, // Trasparente altrimenti
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                widget.icon,
-                color: isSelected ? Colors.white : Colors.grey[700],
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
