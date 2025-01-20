@@ -64,7 +64,7 @@ class WorkspaceAppBar extends StatelessWidget implements PreferredSizeWidget {
             workspaces: workspaces,
             onWorkspaceChanged: onWorkspaceChanged,
           ),
-                    _DropdownButtonWithMenu(
+          _DropdownButtonWithMenu(
             label: 'Recenti',
             items: ['Progetto 1', 'Progetto 2', 'Progetto 3'],
             onSelected: (value) {
@@ -96,53 +96,52 @@ class WorkspaceAppBar extends StatelessWidget implements PreferredSizeWidget {
               style: TextStyle(color: Colors.white),
             ),
             onPressed: onAddWorkspace, // Callback aggiornato
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.grey[700], // Colore di sfondo
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(4.0), // Arrotonda gli angoli
-    ),
-    padding: const EdgeInsets.symmetric(
-      horizontal: 16.0, // Margini interni orizzontali
-      vertical: 12.0, // Margini interni verticali
-    ),
-  ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[700], // Colore di sfondo
+              shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(4.0), // Arrotonda gli angoli
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0, // Margini interni orizzontali
+                vertical: 12.0, // Margini interni verticali
+              ),
+            ),
           ),
         ],
       ),
       centerTitle: false,
       actions: [
         // Barra di ricerca
-        Container(
-          width: 240,
-          margin: const EdgeInsets.symmetric(horizontal: 8.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFDDDDDD)),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: TextField(
-            focusNode: searchFocusNode,
-            textAlignVertical: TextAlignVertical.center,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              prefixIcon: const Icon(Icons.search, color: Colors.black),
-              hintText: 'Ricerca',
-              border: InputBorder.none,
-            ),
-            onChanged: onSearchQueryChanged,
-          ),
-        ),
+Container(
+  height: 40, // Altezza complessiva del contenitore
+  width: 240,
+  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+  //padding: EdgeInsets.fromLTRB(0,0,0,0), // Centra il testo e il cursore
+  decoration: BoxDecoration(
+    color: Colors.white,
+    border: Border.all(color: const Color(0xFFDDDDDD)),
+    borderRadius: BorderRadius.circular(4),
+  ),
+  child: TextField(
+    focusNode: searchFocusNode,
+    textAlignVertical: TextAlignVertical.center, // Allinea il testo verticalmente
+    decoration: const InputDecoration(
+      contentPadding: EdgeInsets.fromLTRB(0,0,0,10), // Centra il testo e il cursore
+      prefixIcon: Icon(Icons.search, color: Colors.black),
+      hintText: 'Ricerca',
+      border: InputBorder.none,
+    ),
+    onChanged: onSearchQueryChanged,
+  ),
+),
+
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           decoration: BoxDecoration(
             color: Colors.grey[700],
             shape: BoxShape.circle,
           ),
-          /*child: IconButton(
-            icon: const Icon(Icons.filter_alt, color: Colors.white),
-            onPressed: onOpenFilter,
-            tooltip: 'Filtra Task',
-          ),*/
         ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4.0),

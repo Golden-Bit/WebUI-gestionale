@@ -206,7 +206,7 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
       ),
       tileColor: isSelected ? Colors.orange[50] : Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
       ),
       onTap: () {
         setState(() {
@@ -338,7 +338,7 @@ Widget _buildRecentCard(BuildContext context, {required String title, required C
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: color,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(4),
     ),
     child: Text(
       title,
@@ -447,7 +447,7 @@ Widget _buildActionIconWithText(IconData icon, String label) {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         title,

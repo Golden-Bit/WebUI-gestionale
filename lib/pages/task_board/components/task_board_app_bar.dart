@@ -82,73 +82,78 @@ class TaskBoardAppBar extends StatelessWidget implements PreferredSizeWidget {
             },
           ),
           //const SizedBox(width: 16),
-Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'Crea Board',
-              style: TextStyle(color: Colors.white),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'Crea Board',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: onCreateBoard,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[700], // Colore di sfondo
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(4.0), // Arrotonda gli angoli
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0, // Margini interni orizzontali
+                  vertical: 12.0, // Margini interni verticali
+                ),
+              ),
             ),
-            onPressed: onCreateBoard,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.grey[700], // Colore di sfondo
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(4.0), // Arrotonda gli angoli
-    ),
-    padding: const EdgeInsets.symmetric(
-      horizontal: 16.0, // Margini interni orizzontali
-      vertical: 12.0, // Margini interni verticali
-    ),
-  ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'Crea Task List',
-              style: TextStyle(color: Colors.white),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text(
+                'Crea Task List',
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: onAddTaskList,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[700], // Colore di sfondo
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(4.0), // Arrotonda gli angoli
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0, // Margini interni orizzontali
+                  vertical: 12.0, // Margini interni verticali
+                ),
+              ),
             ),
-            onPressed: onAddTaskList,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.grey[700], // Colore di sfondo
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(4.0), // Arrotonda gli angoli
-    ),
-    padding: const EdgeInsets.symmetric(
-      horizontal: 16.0, // Margini interni orizzontali
-      vertical: 12.0, // Margini interni verticali
-    ),
-  ),
           ),
-        ),
         ],
       ),
       centerTitle: false,
       actions: [
-        // Barra di ricerca
-        Container(
-          width: 240,
-          margin: const EdgeInsets.symmetric(horizontal: 8.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFDDDDDD)),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: TextField(
-            focusNode: searchFocusNode, // Usa il FocusNode
-            textAlignVertical: TextAlignVertical.center,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              prefixIcon: const Icon(Icons.search, color: Colors.black),
-              hintText: 'Ricerca',
-              border: InputBorder.none,
-            ),
-            onChanged: onSearchQueryChanged, // Notifica i cambiamenti della query
-          ),
-        ),
+        // Barra di ricerca         // Barra di ricerca
+Container(
+  height: 40, // Altezza complessiva del contenitore
+  width: 240,
+  margin: const EdgeInsets.symmetric(horizontal: 8.0),
+  //padding: const EdgeInsets.fromLTRB(0,0,0,0),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    border: Border.all(color: const Color(0xFFDDDDDD)),
+    borderRadius: BorderRadius.circular(4),
+  ),
+  child: TextField(
+    focusNode: searchFocusNode,
+    textAlignVertical: TextAlignVertical.center, // Allinea il testo verticalmente
+    decoration: const InputDecoration(
+      contentPadding: EdgeInsets.fromLTRB(0,0,0,10), // Centra il testo e il cursore
+      prefixIcon: Icon(Icons.search, color: Colors.black),
+      hintText: 'Ricerca',
+      border: InputBorder.none,
+    ),
+    onChanged: onSearchQueryChanged,
+  ),
+),
+
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           decoration: BoxDecoration(
