@@ -170,48 +170,58 @@ void _applyFilters() {
         final field = entry.key;
         final value = entry.value;
 
-        // Filtri numerici
+        // **Filtri Numerici**
         if (field.endsWith('_min') || field.endsWith('_max')) {
           final baseField = field.replaceAll('_min', '').replaceAll('_max', '');
           final attributeValue = double.tryParse(object.getAttribute(baseField)?.toString() ?? '');
           if (attributeValue != null) {
             if (field.endsWith('_min') && value.isNotEmpty) {
+              // Se il valore minimo è impostato, verifica che il valore sia >= al minimo
               return attributeValue >= double.parse(value);
             }
             if (field.endsWith('_max') && value.isNotEmpty) {
+              // Se il valore massimo è impostato, verifica che il valore sia <= al massimo
               return attributeValue <= double.parse(value);
             }
           }
-          return true;
+          return true; // Ignora il filtro se il valore è vuoto o non valido
         }
 
-        // Filtri date
+        // **Filtri Date**
         if (field.endsWith('_start') || field.endsWith('_end')) {
           final baseField = field.replaceAll('_start', '').replaceAll('_end', '');
           final attributeValue = DateTime.tryParse(object.getAttribute(baseField)?.toString() ?? '');
+
+          // Ignora il filtro se l'attributo è nullo o non è una data valida
           if (attributeValue != null) {
             if (field.endsWith('_start') && value.isNotEmpty) {
-              return attributeValue.isAfter(DateTime.parse(value)) || 
+              // Verifica che la data sia successiva o uguale alla data di inizio
+              return attributeValue.isAfter(DateTime.parse(value)) ||
                      attributeValue.isAtSameMomentAs(DateTime.parse(value));
             }
             if (field.endsWith('_end') && value.isNotEmpty) {
-              return attributeValue.isBefore(DateTime.parse(value)) || 
+              // Verifica che la data sia precedente o uguale alla data di fine
+              return attributeValue.isBefore(DateTime.parse(value)) ||
                      attributeValue.isAtSameMomentAs(DateTime.parse(value));
             }
           }
-          return true;
+          return true; // Ignora il filtro se il valore è vuoto
         }
 
-        // Filtri testuali
+        // **Filtri Testuali**
         final attributeValue = object.getAttribute(field)?.toString().toLowerCase();
         if (attributeValue != null) {
+          // Verifica che l'attributo contenga il valore (ignorando maiuscole/minuscole)
           return attributeValue.contains(value.toLowerCase());
         }
+
+        // Se nessun filtro è applicabile, restituisce false
         return false;
       });
     }).toList();
   });
 }
+
 
 
   void _onFilterChanged(String field, String value) {

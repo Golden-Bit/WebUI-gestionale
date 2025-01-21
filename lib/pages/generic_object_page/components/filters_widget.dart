@@ -164,72 +164,89 @@ void _initializeControllers(Map<String, dynamic> config) {
             );
             break;
 
-          case "dateRange":
-            final startController = _dateControllers['${label}_start'];
-            final endController = _dateControllers['${label}_end'];
+case "dateRange":
+  final startController = _dateControllers['${label}_start'];
+  final endController = _dateControllers['${label}_end'];
 
-            filterWidgets.add(
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Filtra per $label (Intervallo Date)'),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: startController,
-                            decoration: InputDecoration(
-                              labelText: 'Da',
-                              border: OutlineInputBorder(),
-                            ),
-                            readOnly: true,
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                startController?.text = picked.toIso8601String();
-                                widget.onFilterChanged('${label}_start', picked.toIso8601String());
-                              }
+  filterWidgets.add(
+    Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filtra per $label (Intervallo Date)'),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: startController,
+                  decoration: InputDecoration(
+                    labelText: 'Da',
+                    border: OutlineInputBorder(),
+                    suffixIcon: startController?.text.isNotEmpty == true
+                        ? IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              startController?.clear();
+                              widget.onFilterChanged('${label}_start', ''); // Imposta filtro vuoto
                             },
-                          ),
-                        ),
-                        SizedBox(width: 8.0),
-                        Expanded(
-                          child: TextField(
-                            controller: endController,
-                            decoration: InputDecoration(
-                              labelText: 'A',
-                              border: OutlineInputBorder(),
-                            ),
-                            readOnly: true,
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                endController?.text = picked.toIso8601String();
-                                widget.onFilterChanged('${label}_end', picked.toIso8601String());
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          )
+                        : null,
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      startController?.text = picked.toIso8601String();
+                      widget.onFilterChanged('${label}_start', picked.toIso8601String());
+                    }
+                  },
                 ),
               ),
-            );
-            break;
-
+              SizedBox(width: 8.0),
+              Expanded(
+                child: TextField(
+                  controller: endController,
+                  decoration: InputDecoration(
+                    labelText: 'A',
+                    border: OutlineInputBorder(),
+                    suffixIcon: endController?.text.isNotEmpty == true
+                        ? IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              endController?.clear();
+                              widget.onFilterChanged('${label}_end', ''); // Imposta filtro vuoto
+                            },
+                          )
+                        : null,
+                  ),
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      endController?.text = picked.toIso8601String();
+                      widget.onFilterChanged('${label}_end', picked.toIso8601String());
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+  break;
           // Aggiungi ulteriori tipi di filtro se necessario
         }
       }

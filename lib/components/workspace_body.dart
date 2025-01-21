@@ -93,13 +93,13 @@ class WorkspaceBody extends StatelessWidget {
                 ),
                 _buildGridCard(
                   context,
-                  icon: Icons.task,
-                  label: 'Task Manager',
+                  icon: Icons.bar_chart,
+                  label: 'TaskBoard',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => TaskBoard(
+                        builder: (context) => TaskBoardHome(
                           token: token.accessToken,
                           dbName: selectedWorkspace?.associatedDatabase ?? '',
                         ),
@@ -211,22 +211,6 @@ class WorkspaceBody extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ESGDataScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildGridCard(
-                  context,
-                  icon: Icons.bar_chart,
-                  label: 'TaskBoard Home',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TaskBoardHome(
-                          token: token.accessToken,
-                          dbName: selectedWorkspace?.associatedDatabase ?? '',
-                        ),
                       ),
                     );
                   },

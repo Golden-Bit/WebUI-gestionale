@@ -3,6 +3,7 @@ import 'package:flutter_app/pages/task_board/components/task_board_app_bar.dart'
 import 'package:flutter_app/pages/task_board/components/task_board_class.dart';
 import 'package:flutter_app/pages/task_board/components/task_board_service.dart';
 import 'package:flutter_app/pages/task_board/components/workspace_helpers.dart';
+import 'package:flutter_app/pages/task_board/task_board.dart';
 import 'package:flutter_app/user_manager/auth_service.dart';
 //import 'package:flutter_app/user_manager/user_model.dart';
 
@@ -216,6 +217,8 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                       MouseRegion(
                         onEnter: (_) => isHovered.value = true,
                         onExit: (_) => isHovered.value = false,
+                        cursor: SystemMouseCursors
+                            .click, // Cambia il cursore al passaggio
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
@@ -296,26 +299,65 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                         _buildSidebarWorkspaceTile(
                           icon: Icons.dashboard,
                           title: "Bacheche",
+                          onTap: () {
+                            print(
+                                "Apertura delle bacheche dello spazio di lavoro ${workspace.name}");
+                            // Logica per aprire la sezione Bacheche
+                          },
                         ),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.collections_bookmark,
                           title: "Raccolte",
+                          onTap: () {
+                            print(
+                                "Apertura delle raccolte dello spazio di lavoro ${workspace.name}");
+                            // Logica per aprire la sezione Raccolte
+                          },
                         ),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.star,
                           title: "Punti salienti",
+                          onTap: () {
+                            print(
+                                "Visualizzazione dei punti salienti dello spazio di lavoro ${workspace.name}");
+                            // Logica per aprire la sezione Punti salienti
+                          },
                         ),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.grid_view,
                           title: "Viste",
+                          onTap: () {
+                            print(
+                                "Navigazione alla pagina delle viste dello spazio di lavoro ${workspace.name}");
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TaskBoard(
+                                  token: widget.token,
+                                  dbName: workspace.associatedDatabase ??
+                                      '', // Passa il database associato
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.person,
                           title: "Membri",
+                          onTap: () {
+                            print(
+                                "Visualizzazione dei membri dello spazio di lavoro ${workspace.name}");
+                            // Logica per aprire la sezione Membri
+                          },
                         ),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.settings,
                           title: "Impostazioni",
+                          onTap: () {
+                            print(
+                                "Apertura delle impostazioni dello spazio di lavoro ${workspace.name}");
+                            // Logica per aprire la sezione Impostazioni
+                          },
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -330,55 +372,12 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     );
   }
 
-  /// Funzione per creare i pulsanti principali
-/*Widget _buildSidebarButton({
-  required int index,
-  required IconData icon,
-  required String title,
-}) {
-  final isSelected = selectedIndex == index; // Verifica se è selezionato
-
-  return InkWell(
-    onTap: () {
-      setState(() {
-        selectedIndex = index; // Aggiorna il pulsante selezionato
-      });
-    },
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.grey[700]
-            : Colors.transparent, // Colore di sfondo se selezionato
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? Colors.white : Colors.grey[700],
-          ),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}*/
-
   Widget _buildSidebarWorkspaceTile({
     required IconData icon,
     required String title,
     int? badgeCount,
     Widget? trailing,
+    VoidCallback? onTap, // Aggiungi un callback opzionale
   }) {
     bool isHovered = false;
 
@@ -387,38 +386,43 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
         return MouseRegion(
           onEnter: (_) => setState(() => isHovered = true),
           onExit: (_) => setState(() => isHovered = false),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-            decoration: BoxDecoration(
-              color: isHovered ? Colors.grey[400] : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, color: Colors.grey[700], size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                if (badgeCount != null)
-                  CircleAvatar(
-                    backgroundColor: Colors.black,
-                    radius: 12,
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: onTap, // Esegui il callback al clic
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+              decoration: BoxDecoration(
+                color: isHovered ? Colors.grey[400] : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(icon, color: Colors.grey[700], size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      badgeCount.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                if (trailing != null) trailing,
-              ],
+                  if (badgeCount != null)
+                    CircleAvatar(
+                      backgroundColor: Colors.black,
+                      radius: 12,
+                      child: Text(
+                        badgeCount.toString(),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                  if (trailing != null) trailing,
+                ],
+              ),
             ),
           ),
         );
@@ -479,25 +483,13 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                 const SizedBox(height: 12),
                 _buildWorkspaceSection(),
                 const SizedBox(height: 24),
-                //Center(
-                //  child: ElevatedButton(
-                //    onPressed: () {
-                //      print("Visualizza tutte le bacheche chiuse");
-                //    },
-                //    child: const Text("Visualizza tutte le bacheche chiuse"),
-                //  ),
-                //),
-                //Positioned(
-                //  left: 0,
-                //  bottom: 0,
-                //  child:
-                SizedBox(
+                const SizedBox(
                     width: 260,
                     child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: _buildActionIconWithText(
-                            null, "Visualizza tutte le bacheche chiuse")))
-                //),
+                        padding: EdgeInsets.all(12.0),
+                        child: ActionIconWithText(
+                            icon: null,
+                            label: "Visualizza tutte le bacheche chiuse")))
               ],
             ),
           ),
@@ -603,10 +595,50 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                   // Pulsanti accanto al nome dello spazio di lavoro
                   Row(
                     children: [
-                      _buildActionIconWithText(Icons.dashboard, "Bacheche"),
-                      _buildActionIconWithText(Icons.grid_view, "Viste"),
-                      _buildActionIconWithText(Icons.person, "Membri"),
-                      _buildActionIconWithText(Icons.settings, "Impostazioni"),
+                      ActionIconWithText(
+                        icon: Icons.dashboard,
+                        label: "Bacheche",
+                        onTap: () {
+                          print(
+                              "Navigazione alla sezione Bacheche dello spazio di lavoro ${workspace.name}");
+                          // Logica per navigare alla sezione Bacheche, se necessario
+                        },
+                      ),
+                      ActionIconWithText(
+                        icon: Icons.grid_view,
+                        label: "Viste",
+                        onTap: () {
+                          print(
+                              "Navigazione alla pagina delle viste dello spazio di lavoro");
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskBoard(
+                                token: widget.token,
+                                dbName: workspace.associatedDatabase ?? '',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      ActionIconWithText(
+                        icon: Icons.person,
+                        label: "Membri",
+                        onTap: () {
+                          print(
+                              "Visualizzazione dei membri dello spazio di lavoro ${workspace.name}");
+                          // Logica per navigare alla sezione Membri, se necessario
+                        },
+                      ),
+                      ActionIconWithText(
+                        icon: Icons.settings,
+                        label: "Impostazioni",
+                        onTap: () {
+                          print(
+                              "Apertura delle impostazioni dello spazio di lavoro ${workspace.name}");
+                          // Logica per aprire la sezione Impostazioni, se necessario
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -661,43 +693,6 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
       }).toList(),
     );
   }
-
-Widget _buildActionIconWithText(IconData? icon, String label) {
-  return MouseRegion(
-    cursor: SystemMouseCursors.click, // Cambia il cursore al passaggio
-    child: GestureDetector(
-      onTap: () {
-        // Aggiungi qui il comportamento al clic
-        print('$label cliccato');
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[200], // Sfondo grigio chiaro
-            borderRadius: BorderRadius.circular(4), // Bordi arrotondati
-          ),
-          child: Row(
-            children: [
-              if (icon != null)
-                Icon(icon, color: Colors.grey[700], size: 20), // Icona
-              if (icon != null) const SizedBox(width: 4), // Spaziatura tra icona e testo
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black, // Testo nero
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
   Widget _buildWorkspaceCard(BuildContext context,
       {required String title, required Color color}) {
@@ -767,15 +762,16 @@ class SidebarButton extends StatefulWidget {
   final Function(int) onSelected;
 
   const SidebarButton({
-    Key? key,
+    super.key,
     required this.index,
     required this.icon,
     required this.title,
     required this.selectedIndex,
     required this.onSelected,
-  }) : super(key: key);
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   _SidebarButtonState createState() => _SidebarButtonState();
 }
 
@@ -787,6 +783,7 @@ class _SidebarButtonState extends State<SidebarButton> {
     final isSelected = widget.index == widget.selectedIndex;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
       child: GestureDetector(
@@ -818,6 +815,75 @@ class _SidebarButtonState extends State<SidebarButton> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ActionIconWithText extends StatefulWidget {
+  final IconData? icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const ActionIconWithText({
+    super.key,
+    this.icon,
+    required this.label,
+    this.onTap,
+  });
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _ActionIconWithTextState createState() => _ActionIconWithTextState();
+}
+
+class _ActionIconWithTextState extends State<ActionIconWithText> {
+  bool isHovered = false; // Stato per l'hover
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click, // Cambia il cursore al passaggio
+      onEnter: (_) {
+        setState(() {
+          isHovered = true;
+        });
+      },
+      onExit: (_) {
+        setState(() {
+          isHovered = false;
+        });
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+            decoration: BoxDecoration(
+              color: isHovered
+                  ? Colors.grey[400] // Colore di sfondo più scuro quando hover
+                  : Colors.grey[200], // Colore normale
+              borderRadius: BorderRadius.circular(4), // Bordi arrotondati
+            ),
+            child: Row(
+              children: [
+                if (widget.icon != null)
+                  Icon(widget.icon, color: Colors.grey[700], size: 20), // Icona
+                if (widget.icon != null) const SizedBox(width: 4), // Spaziatura
+                Text(
+                  widget.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black, // Testo nero
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
