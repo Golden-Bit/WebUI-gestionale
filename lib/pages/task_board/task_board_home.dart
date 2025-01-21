@@ -147,182 +147,190 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     );
   }
 
-Widget _buildSidebar() {
-  return Container(
-    width: 250,
-    color: Colors.grey[100],
-    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Pulsanti principali in alto
-        SidebarButton(
-          index: 0,
-          icon: Icons.dashboard,
-          title: "Bacheche",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index; // Aggiorna il pulsante selezionato
-            });
-          },
-        ),
-        SidebarButton(
-          index: 1,
-          icon: Icons.bookmark_border,
-          title: "Modelli",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-        ),
-        SidebarButton(
-          index: 2,
-          icon: Icons.home_outlined,
-          title: "Pagina iniziale",
-          selectedIndex: selectedIndex,
-          onSelected: (index) {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-        ),
-        const SizedBox(height: 32),
+  Widget _buildSidebar() {
+    return Container(
+      width: 250,
+      color: Colors.grey[100],
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Pulsanti principali in alto
+          SidebarButton(
+            index: 0,
+            icon: Icons.dashboard,
+            title: "Bacheche",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index; // Aggiorna il pulsante selezionato
+              });
+            },
+          ),
+          SidebarButton(
+            index: 1,
+            icon: Icons.bookmark_border,
+            title: "Modelli",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+          SidebarButton(
+            index: 2,
+            icon: Icons.home_outlined,
+            title: "Pagina iniziale",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+          const SizedBox(height: 32),
+          const Text(
+            "Spazi di lavoro",
+            style: TextStyle(
+              fontSize: 12,
+              //fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 0),
+          // Generazione dinamica del menu per ogni spazio di lavoro
+          Expanded(
+            child: ListView.builder(
+              itemCount: workspaces.length,
+              itemBuilder: (context, index) {
+                final workspace = workspaces[index];
+                final isExpanded = isExpandedList[index];
+                final isHovered = ValueNotifier(false);
 
-        // Generazione dinamica del menu per ogni spazio di lavoro
-        Expanded(
-          child: ListView.builder(
-            itemCount: workspaces.length,
-            itemBuilder: (context, index) {
-              final workspace = workspaces[index];
-              final isExpanded = isExpandedList[index];
-              final isHovered = ValueNotifier(false);
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MouseRegion(
-                      onEnter: (_) => isHovered.value = true,
-                      onExit: (_) => isHovered.value = false,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isExpandedList[index] = !isExpandedList[index];
-                          });
-                        },
-                        child: ValueListenableBuilder(
-                          valueListenable: isHovered,
-                          builder: (context, hover, _) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 4.0),
-                              decoration: BoxDecoration(
-                                color: isExpanded
-                                    ? Colors.grey[700]
-                                    : hover
-                                        ? Colors.grey[200]
-                                        : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 30,
-                                        height: 30,
-                                        margin: const EdgeInsets.only(right: 8),
-                                        decoration: BoxDecoration(
-                                          color: _getColorForInitial(
-                                              workspace.name[0]),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            workspace.name[0],
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MouseRegion(
+                        onEnter: (_) => isHovered.value = true,
+                        onExit: (_) => isHovered.value = false,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isExpandedList[index] = !isExpandedList[index];
+                            });
+                          },
+                          child: ValueListenableBuilder(
+                            valueListenable: isHovered,
+                            builder: (context, hover, _) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 4.0),
+                                decoration: BoxDecoration(
+                                  color: isExpanded
+                                      ? Colors.grey[700]
+                                      : hover
+                                          ? Colors.grey[400]
+                                          : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 30,
+                                          height: 30,
+                                          margin:
+                                              const EdgeInsets.only(right: 8),
+                                          decoration: BoxDecoration(
+                                            color: _getColorForInitial(
+                                                workspace.name[0]),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              workspace.name[0],
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      Text(
-                                        workspace.name,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: isExpanded
-                                              ? Colors.white
-                                              : Colors.black,
+                                        Text(
+                                          workspace.name,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: isExpanded
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  Icon(
-                                    isExpanded
-                                        ? Icons.expand_less
-                                        : Icons.expand_more,
-                                    color: isExpanded
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                      ],
+                                    ),
+                                    Icon(
+                                      isExpanded
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
+                                      color: isExpanded
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    if (isExpanded) ...[
-                      const SizedBox(height: 16),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.table_chart,
-                        title: "Bacheche",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.collections_bookmark,
-                        title: "Raccolte",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.star,
-                        title: "Punti salienti",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.grid_view,
-                        title: "Viste",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.person,
-                        title: "Membri",
-                      ),
-                      _buildSidebarWorkspaceTile(
-                        icon: Icons.settings,
-                        title: "Impostazioni",
-                      ),
-                      const SizedBox(height: 16),
+                      if (isExpanded) ...[
+                        const SizedBox(height: 16),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.dashboard,
+                          title: "Bacheche",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.collections_bookmark,
+                          title: "Raccolte",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.star,
+                          title: "Punti salienti",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.grid_view,
+                          title: "Viste",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.person,
+                          title: "Membri",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.settings,
+                          title: "Impostazioni",
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ],
-                  ],
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-
-/// Funzione per creare i pulsanti principali
+  /// Funzione per creare i pulsanti principali
 /*Widget _buildSidebarButton({
   required int index,
   required IconData icon,
@@ -366,115 +374,57 @@ Widget _buildSidebar() {
   );
 }*/
 
+  Widget _buildSidebarWorkspaceTile({
+    required IconData icon,
+    required String title,
+    int? badgeCount,
+    Widget? trailing,
+  }) {
+    bool isHovered = false;
 
-Widget _buildSidebarButton({
-  required int index,
-  required IconData icon,
-  required String title,
-}) {
-  bool isHovered = false; // Variabile locale per gestire l'hover
-
-  return MouseRegion(
-    onEnter: (_) {
-      setState(() {
-        isHovered = true;
-      });
-    },
-    onExit: (_) {
-      setState(() {
-        isHovered = false;
-      });
-    },
-    child: GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedIndex = index; // Aggiorna lo stato globale
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0),
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-        decoration: BoxDecoration(
-          color: selectedIndex == index
-              ? Colors.grey[700] // Sfondo grigio scuro se selezionato
-              : isHovered
-                  ? Colors.grey[200] // Sfondo grigio chiaro se hover
-                  : Colors.transparent, // Trasparente altrimenti
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: selectedIndex == index ? Colors.white : Colors.grey[700],
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+            decoration: BoxDecoration(
+              color: isHovered ? Colors.grey[400] : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: selectedIndex == index ? Colors.white : Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-
-Widget _buildSidebarWorkspaceTile({
-  required IconData icon,
-  required String title,
-  int? badgeCount,
-  Widget? trailing,
-}) {
-  bool isHovered = false;
-
-  return StatefulBuilder(
-    builder: (context, setState) {
-      return MouseRegion(
-        onEnter: (_) => setState(() => isHovered = true),
-        onExit: (_) => setState(() => isHovered = false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-          decoration: BoxDecoration(
-            color: isHovered ? Colors.grey[200] : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.grey[700], size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              if (badgeCount != null)
-                CircleAvatar(
-                  backgroundColor: Colors.black,
-                  radius: 12,
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.grey[700], size: 20),
+                const SizedBox(width: 8),
+                Expanded(
                   child: Text(
-                    badgeCount.toString(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              if (trailing != null) trailing,
-            ],
+                if (badgeCount != null)
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    radius: 12,
+                    child: Text(
+                      badgeCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                if (trailing != null) trailing,
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   /// Costruisce il contenuto principale in base al pulsante selezionato
   Widget _buildMainContent() {
@@ -529,14 +479,25 @@ Widget _buildSidebarWorkspaceTile({
                 const SizedBox(height: 12),
                 _buildWorkspaceSection(),
                 const SizedBox(height: 24),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      print("Visualizza tutte le bacheche chiuse");
-                    },
-                    child: const Text("Visualizza tutte le bacheche chiuse"),
-                  ),
-                ),
+                //Center(
+                //  child: ElevatedButton(
+                //    onPressed: () {
+                //      print("Visualizza tutte le bacheche chiuse");
+                //    },
+                //    child: const Text("Visualizza tutte le bacheche chiuse"),
+                //  ),
+                //),
+                //Positioned(
+                //  left: 0,
+                //  bottom: 0,
+                //  child:
+                SizedBox(
+                    width: 260,
+                    child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: _buildActionIconWithText(
+                            null, "Visualizza tutte le bacheche chiuse")))
+                //),
               ],
             ),
           ),
@@ -701,28 +662,38 @@ Widget _buildSidebarWorkspaceTile({
     );
   }
 
-Widget _buildActionIconWithText(IconData icon, String label) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200], // Sfondo grigio chiaro
-        borderRadius: BorderRadius.circular(8), // Bordi arrotondati
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey[700], size: 20), // Icona
-          const SizedBox(width: 4), // Spaziatura tra icona e testo
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black, // Testo nero
-            ),
+Widget _buildActionIconWithText(IconData? icon, String label) {
+  return MouseRegion(
+    cursor: SystemMouseCursors.click, // Cambia il cursore al passaggio
+    child: GestureDetector(
+      onTap: () {
+        // Aggiungi qui il comportamento al clic
+        print('$label cliccato');
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[200], // Sfondo grigio chiaro
+            borderRadius: BorderRadius.circular(4), // Bordi arrotondati
           ),
-        ],
+          child: Row(
+            children: [
+              if (icon != null)
+                Icon(icon, color: Colors.grey[700], size: 20), // Icona
+              if (icon != null) const SizedBox(width: 4), // Spaziatura tra icona e testo
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black, // Testo nero
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );
@@ -827,7 +798,7 @@ class _SidebarButtonState extends State<SidebarButton> {
             color: isSelected
                 ? Colors.grey[700] // Grigio scuro se selezionato
                 : isHovered
-                    ? Colors.grey[200] // Grigio chiaro se hover
+                    ? Colors.grey[400] // Grigio chiaro se hover
                     : Colors.transparent, // Trasparente altrimenti
             borderRadius: BorderRadius.circular(8),
           ),

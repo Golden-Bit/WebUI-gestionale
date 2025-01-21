@@ -156,164 +156,172 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Pulsanti principali in alto
-          _buildSidebarButton(
+          SidebarButton(
             index: 0,
             icon: Icons.dashboard,
             title: "Bacheche",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index; // Aggiorna il pulsante selezionato
+              });
+            },
           ),
-          _buildSidebarButton(
+          SidebarButton(
             index: 1,
             icon: Icons.bookmark_border,
             title: "Modelli",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
           ),
-          _buildSidebarButton(
+          SidebarButton(
             index: 2,
             icon: Icons.home_outlined,
             title: "Pagina iniziale",
+            selectedIndex: selectedIndex,
+            onSelected: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
           ),
           const SizedBox(height: 32),
-
+          const Text(
+            "Spazi di lavoro",
+            style: TextStyle(
+              fontSize: 12,
+              //fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 0),
           // Generazione dinamica del menu per ogni spazio di lavoro
           Expanded(
             child: ListView.builder(
               itemCount: workspaces.length,
               itemBuilder: (context, index) {
                 final workspace = workspaces[index];
-                final isExpanded =
-                    isExpandedList[index]; // Stato espanso o meno
+                final isExpanded = isExpandedList[index];
+                final isHovered = ValueNotifier(false);
 
                 return Padding(
-                    // Aggiunto padding intorno ad ogni elemento
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0), // Padding verticale
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header per ogni spazio di lavoro
-                        InkWell(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MouseRegion(
+                        onEnter: (_) => isHovered.value = true,
+                        onExit: (_) => isHovered.value = false,
+                        child: GestureDetector(
                           onTap: () {
-                            // Espandi/collassa lo stato del menu cliccato
                             setState(() {
-                              if (isExpandedList[index]) {
-                                isExpandedList[index] =
-                                    false; // Collassa se già espanso
-                              } else {
-                                // Collassa tutti gli altri e espandi solo quello selezionato
-                                for (int i = 0;
-                                    i < isExpandedList.length;
-                                    i++) {
-                                  isExpandedList[i] = i == index;
-                                }
-                              }
+                              isExpandedList[index] = !isExpandedList[index];
                             });
                           },
-                          child: Container(
-                            //color: isExpanded
-                              //  ? Colors.grey[700]
-                              //  : Colors.transparent, // Sfondo scuro se espanso
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 4.0),
-      decoration: BoxDecoration(
-        color: isExpanded
-            ? Colors.grey[700]
-            : Colors.transparent, // Sfondo scuro se selezionato
-        borderRadius: BorderRadius.circular(4),
-      ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
+                          child: ValueListenableBuilder(
+                            valueListenable: isHovered,
+                            builder: (context, hover, _) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0, horizontal: 4.0),
+                                decoration: BoxDecoration(
+                                  color: isExpanded
+                                      ? Colors.grey[700]
+                                      : hover
+                                          ? Colors.grey[400]
+                                          : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // Icona con l'iniziale dello spazio di lavoro
-                                    Container(
-                                      width: 30,
-                                      height: 30,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      decoration: BoxDecoration(
-                                        color: _getColorForInitial(
-                                            workspace.name[0]),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          workspace.name[0],
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 30,
+                                          height: 30,
+                                          margin:
+                                              const EdgeInsets.only(right: 8),
+                                          decoration: BoxDecoration(
+                                            color: _getColorForInitial(
+                                                workspace.name[0]),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              workspace.name[0],
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                        Text(
+                                          workspace.name,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: isExpanded
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    // Nome dello spazio di lavoro
-                                    Text(
-                                      workspace.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: isExpanded
-                                            ? Colors.white
-                                            : Colors
-                                                .black, // Testo bianco se selezionato
-                                      ),
+                                    Icon(
+                                      isExpanded
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
+                                      color: isExpanded
+                                          ? Colors.white
+                                          : Colors.black,
                                     ),
                                   ],
                                 ),
-                                Icon(
-                                  isExpanded
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                  color: isExpanded
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Icona bianca se selezionato
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ),
-
-                        // Contenuto espanso se lo stato è espanso
-                        if (isExpanded) ...[
-                          const SizedBox(height: 16),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.table_chart,
-                            title: "Bacheche",
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.collections_bookmark,
-                            title: "Raccolte",
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.star,
-                            title: "Punti salienti",
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.grid_view,
-                            title: "Viste",
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.person,
-                            title: "Membri",
-                            trailing: IconButton(
-                              onPressed: () {
-                                print("Aggiungi membro");
-                              },
-                              icon: const Icon(Icons.add),
-                            ),
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.settings,
-                            title: "Impostazioni",
-                          ),
-                          _buildSidebarWorkspaceTile(
-                            icon: Icons.attach_money,
-                            title: "Fatturazione",
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                      ),
+                      if (isExpanded) ...[
+                        const SizedBox(height: 16),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.table_chart,
+                          title: "Bacheche",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.collections_bookmark,
+                          title: "Raccolte",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.star,
+                          title: "Punti salienti",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.grid_view,
+                          title: "Viste",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.person,
+                          title: "Membri",
+                        ),
+                        _buildSidebarWorkspaceTile(
+                          icon: Icons.settings,
+                          title: "Impostazioni",
+                        ),
+                        const SizedBox(height: 16),
                       ],
-                    ));
+                    ],
+                  ),
+                );
               },
             ),
           ),
@@ -322,39 +330,49 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     );
   }
 
-  Widget _buildSidebarButton({
-    required int index,
-    required IconData icon,
-    required String title,
-  }) {
-    final isSelected = selectedIndex == index;
+  /// Funzione per creare i pulsanti principali
+/*Widget _buildSidebarButton({
+  required int index,
+  required IconData icon,
+  required String title,
+}) {
+  final isSelected = selectedIndex == index; // Verifica se è selezionato
 
-    return Container(
+  return InkWell(
+    onTap: () {
+      setState(() {
+        selectedIndex = index; // Aggiorna il pulsante selezionato
+      });
+    },
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.grey[700]
-            : Colors.transparent, // Sfondo scuro se selezionato
-        borderRadius: BorderRadius.circular(4),
+            : Colors.transparent, // Colore di sfondo se selezionato
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: ListTile(
-        leading:
-            Icon(icon, color: isSelected ? Colors.white : Colors.grey[700]),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Colors.black,
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? Colors.white : Colors.grey[700],
           ),
-        ),
-        onTap: () {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: isSelected ? Colors.white : Colors.black,
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}*/
 
   Widget _buildSidebarWorkspaceTile({
     required IconData icon,
@@ -362,24 +380,48 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     int? badgeCount,
     Widget? trailing,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.grey[700]),
-      title: Text(
-        title,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-      ),
-      trailing: badgeCount != null
-          ? CircleAvatar(
-              backgroundColor: Colors.black,
-              radius: 12,
-              child: Text(
-                badgeCount.toString(),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            )
-          : trailing,
-      onTap: () {
-        print("Cliccato su $title");
+    bool isHovered = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return MouseRegion(
+          onEnter: (_) => setState(() => isHovered = true),
+          onExit: (_) => setState(() => isHovered = false),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+            decoration: BoxDecoration(
+              color: isHovered ? Colors.grey[400] : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.grey[700], size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                if (badgeCount != null)
+                  CircleAvatar(
+                    backgroundColor: Colors.black,
+                    radius: 12,
+                    child: Text(
+                      badgeCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                if (trailing != null) trailing,
+              ],
+            ),
+          ),
+        );
       },
     );
   }
@@ -437,14 +479,25 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                 const SizedBox(height: 12),
                 _buildWorkspaceSection(),
                 const SizedBox(height: 24),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      print("Visualizza tutte le bacheche chiuse");
-                    },
-                    child: const Text("Visualizza tutte le bacheche chiuse"),
-                  ),
-                ),
+                //Center(
+                //  child: ElevatedButton(
+                //    onPressed: () {
+                //      print("Visualizza tutte le bacheche chiuse");
+                //    },
+                //    child: const Text("Visualizza tutte le bacheche chiuse"),
+                //  ),
+                //),
+                //Positioned(
+                //  left: 0,
+                //  bottom: 0,
+                //  child:
+                SizedBox(
+                    width: 320,
+                    child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: _buildActionIconWithText(
+                            null, "Visualizza tutte le bacheche chiuse")))
+                //),
               ],
             ),
           ),
@@ -609,28 +662,38 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
     );
   }
 
-Widget _buildActionIconWithText(IconData icon, String label) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200], // Sfondo grigio chiaro
-        borderRadius: BorderRadius.circular(8), // Bordi arrotondati
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey[700], size: 20), // Icona
-          const SizedBox(width: 4), // Spaziatura tra icona e testo
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black, // Testo nero
-            ),
+Widget _buildActionIconWithText(IconData? icon, String label) {
+  return MouseRegion(
+    cursor: SystemMouseCursors.click, // Cambia il cursore al passaggio
+    child: GestureDetector(
+      onTap: () {
+        // Aggiungi qui il comportamento al clic
+        print('$label cliccato');
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.grey[200], // Sfondo grigio chiaro
+            borderRadius: BorderRadius.circular(4), // Bordi arrotondati
           ),
-        ],
+          child: Row(
+            children: [
+              if (icon != null)
+                Icon(icon, color: Colors.grey[700], size: 20), // Icona
+              if (icon != null) const SizedBox(width: 4), // Spaziatura tra icona e testo
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black, // Testo nero
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );
@@ -694,4 +757,70 @@ Color _getColorForInitial(String initial) {
 
   // Restituisce il colore basato sull'iniziale, o un colore di default (grigio)
   return colorMap[initial.toUpperCase()] ?? Colors.grey;
+}
+
+class SidebarButton extends StatefulWidget {
+  final int index;
+  final IconData icon;
+  final String title;
+  final int selectedIndex;
+  final Function(int) onSelected;
+
+  const SidebarButton({
+    Key? key,
+    required this.index,
+    required this.icon,
+    required this.title,
+    required this.selectedIndex,
+    required this.onSelected,
+  }) : super(key: key);
+
+  @override
+  _SidebarButtonState createState() => _SidebarButtonState();
+}
+
+class _SidebarButtonState extends State<SidebarButton> {
+  bool isHovered = false; // Stato locale per l'hover
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = widget.index == widget.selectedIndex;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: GestureDetector(
+        onTap: () => widget.onSelected(widget.index),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.grey[700] // Grigio scuro se selezionato
+                : isHovered
+                    ? Colors.grey[400] // Grigio chiaro se hover
+                    : Colors.transparent, // Trasparente altrimenti
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                widget.icon,
+                color: isSelected ? Colors.white : Colors.grey[700],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
