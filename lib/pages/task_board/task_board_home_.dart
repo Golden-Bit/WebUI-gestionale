@@ -295,7 +295,7 @@ class _TaskBoardHomeState extends State<TaskBoardHome> {
                         ),
                       ),
                       if (isExpanded) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _buildSidebarWorkspaceTile(
                           icon: Icons.dashboard,
                           title: "Bacheche",
