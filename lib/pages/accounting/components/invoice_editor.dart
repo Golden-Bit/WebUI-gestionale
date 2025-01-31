@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/accounting/components/invoice_rows_widget.dart';
 
 class InvoiceDetailsWidget extends StatefulWidget {
   const InvoiceDetailsWidget({Key? key}) : super(key: key);
@@ -212,25 +213,18 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
                             ),
                           ),
                           Expanded(
-                            child: DropdownButton<String>(
-                              value: selectedRegister,
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedRegister = value!;
-                                });
-                              },
-                              items: [
-                                "Fatture cliente",
-                                "Altro registro",
-                              ]
-                                  .map(
-                                    (item) => DropdownMenuItem(
-                                      value: item,
-                                      child: Text(item),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
+                            child: CustomDropdown(
+                          items: [
+                            "fatture cliente",
+                            "altro registro",
+                          ],
+                          value: selectedRegister,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRegister = value;
+                            });
+                          },
+                        ),
                           ),
                         ],
                       ),
@@ -258,7 +252,7 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildPlaceholderContent("Righe Fattura"),
+                  const InvoiceRowsWidget(), // Usa il widget esterno per Righe Fattura
                   _buildPlaceholderContent("Movimenti Contabili"),
                   _buildPlaceholderContent("Altre Informazioni"),
                   _buildPlaceholderContent("Fatturazione Elettronica"),
@@ -301,51 +295,28 @@ class _CustomDropdownState extends State<CustomDropdown> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isDropdownOpen = false;
-final TextEditingController _searchController = TextEditingController();
-  List<String> _filteredItems = [];
-final FocusNode _searchFocusNode = FocusNode();
 
-@override
-void initState() {
-  super.initState();
-  _filteredItems = widget.items;
+  // RIMOSSO: la lista filtrata nel genitore
+  // List<String> filteredItems = [];
 
-  // Listener per aggiornare la lista in tempo reale
-_searchController.addListener(() {
-  setState(() {
-    List<String> newFilteredItems = widget.items
-        .where((item) => item.toLowerCase().contains(_searchController.text.toLowerCase()))
-        .toList();
+  // RIMOSSO: il metodo di aggiornamento "pubblico"
+  // void _updateFilteredItems(String query) {
+  //   setState(() {
+  //     filteredItems = widget.items
+  //         .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+  //         .toList();
+  //   });
+  // }
 
-    if (_filteredItems.length != newFilteredItems.length ||
-        !_filteredItems.toSet().containsAll(newFilteredItems.toSet())) {
-      
-      _filteredItems = newFilteredItems;
+  final FocusNode _searchFocusNode = FocusNode();
 
-      // 🔹 Mantieni il testo attuale
-      String currentText = _searchController.text;
+  // RIMOSSO: In initState non gestiamo più la filteredItems nel genitore
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   filteredItems = List.from(widget.items);
+  // }
 
-      // 🔹 Rimuove e ricrea il dropdown
-      _overlayEntry?.remove();
-      _showDropdown();
-
-      // 🔹 Ripristina il testo e il cursore
-      _searchController.text = currentText;
-      _searchController.selection = TextSelection.fromPosition(
-        TextPosition(offset: currentText.length),
-      );
-
-      // 🔹 Dai automaticamente il focus e forza il refresh del cursore
-      Future.delayed(Duration.zero, () {
-        _searchFocusNode.unfocus();  // 🔹 Rimuove temporaneamente il focus
-        _searchFocusNode.requestFocus(); // 🔹 Riapplica il focus per attivare il cursore
-      });
-    }
-  });
-});
-
-
-}
   void _toggleDropdown() {
     if (_isDropdownOpen) {
       _closeDropdown();
@@ -358,95 +329,107 @@ _searchController.addListener(() {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset offset = renderBox.localToGlobal(Offset.zero);
 
+    // AGGIUNTO: manteniamo la lista in una variabile locale (una sola fonte di verità)
+    List<String> localFilteredItems = List.from(widget.items);
+
     _overlayEntry = OverlayEntry(
       builder: (context) {
-        return Stack(
-          children: [
-            // Rileva tocchi fuori dal menu e chiude il dropdown
-            GestureDetector(
-              onTap: _closeDropdown,
-              behavior: HitTestBehavior
-                  .opaque, // Assicura che catturi i tocchi ovunque
-              child: Container(
-                color: Colors
-                    .transparent, // Sfondo trasparente per catturare i tocchi
-              ),
-            ),
-            Positioned(
-              width: renderBox.size.width * 0.5,
-              left: offset.dx,
-              top: offset.dy + renderBox.size.height,
-              child: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(4),
-                child: CompositedTransformFollower(
-                  offset: Offset(0, renderBox.size.height),
-                  link: _layerLink,
-                  showWhenUnlinked: false,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4.0),
-                      color: Colors.white,
-                    ),
-                    constraints: const BoxConstraints(
-                      maxHeight: 300, // Limite massimo di altezza
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Campo di input per la ricerca
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: StatefulBuilder(
-  builder: (context, setStateDropdown) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-  controller: _searchController,
-  focusNode: _searchFocusNode, // 🔹 FocusNode associato
-  decoration: InputDecoration(
-    border: OutlineInputBorder(),
-    hintText: 'Cerca...',
-    contentPadding: EdgeInsets.symmetric(
-      horizontal: 8,
-      vertical: 4,
-    ),
-  ),
-),
-    );
-  },
-),
+        return StatefulBuilder(
+          builder: (context, setStateOverlay) {
+            return Stack(
+              children: [
+                // Schermata trasparente per chiudere il dropdown se si clicca fuori
+                GestureDetector(
+                  onTap: _closeDropdown,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(color: Colors.transparent),
+                ),
+                Positioned(
+                  // Se desideri la stessa larghezza del widget di base, usa renderBox.size.width
+                  width: renderBox.size.width * 0.5,
+                  left: offset.dx,
+                  top: offset.dy + renderBox.size.height,
+                  child: Material(
+                    elevation: 4,
+                    borderRadius: BorderRadius.circular(4),
+                    child: CompositedTransformFollower(
+                      offset: Offset(0, renderBox.size.height),
+                      link: _layerLink,
+                      showWhenUnlinked: false,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4.0),
+                          color: Colors.white,
                         ),
-                        // Lista scrollabile
-                        Expanded(
-                          child: ListView(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            children: _filteredItems.map((item) {
-                              return _buildHoverableListTile(
-                                title: item,
-                                onTap: () {
-  widget.onChanged(item); // Aggiorna il valore tramite callback
-  _closeDropdown();
-},
-                              );
-                            }).toList(),
-                          ),
+                        constraints: const BoxConstraints(maxHeight: 300),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Campo di ricerca: aggiorna solo la variabile locale localFilteredItems
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: TextField(
+                                focusNode: _searchFocusNode,
+                                decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Cerca...',
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                ),
+                                onChanged: (query) {
+                                  setStateOverlay(() {
+                                    localFilteredItems = widget.items
+                                        .where((item) => item
+                                            .toLowerCase()
+                                            .contains(query.toLowerCase()))
+                                        .toList();
+                                  });
+
+                                  // RIMOSSO: niente più chiamata al metodo del genitore
+                                  // _updateFilteredItems(query);
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: ListView(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                children: localFilteredItems.map((item) {
+                                  return _buildHoverableListTile(
+                                    title: item,
+                                    onTap: () {
+                                      // Selezione: aggiorna il valore e chiude l’overlay
+                                      widget.onChanged(item);
+                                      _closeDropdown();
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+
     setState(() {
       _isDropdownOpen = true;
+    });
+
+    // Richiama subito il focus sul campo di ricerca
+    Future.delayed(Duration.zero, () {
+      _searchFocusNode.requestFocus();
     });
   }
 
@@ -475,13 +458,13 @@ _searchController.addListener(() {
             children: [
               Expanded(
                 child: Text(
-  widget.value,
-  style: const TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: Colors.black,
-  ),
-),
+                  widget.value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
               ),
               const Icon(
                 Icons.arrow_drop_down,
