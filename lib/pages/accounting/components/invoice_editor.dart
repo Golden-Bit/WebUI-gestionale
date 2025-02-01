@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/accounting/components/invoice_rows_widget.dart';
+import 'package:flutter_app/pages/accounting/components/subcomponents/invoice_rows_widget.dart';
 
 class InvoiceDetailsWidget extends StatefulWidget {
   const InvoiceDetailsWidget({Key? key}) : super(key: key);
