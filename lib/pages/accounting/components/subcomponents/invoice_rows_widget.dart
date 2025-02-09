@@ -7,12 +7,18 @@ class InvoiceRowsWidget extends StatefulWidget {
   _InvoiceRowsWidgetState createState() => _InvoiceRowsWidgetState();
 }
 
-class _InvoiceRowsWidgetState extends State<InvoiceRowsWidget> {
+class _InvoiceRowsWidgetState extends State<InvoiceRowsWidget> with AutomaticKeepAliveClientMixin {
+
+@override
+bool get wantKeepAlive => true;
+
   final ScrollController _horizontalScrollController = ScrollController();
 
   bool _resizerHovering = false;
-  // Lista dinamica delle righe della tabella
+  // Lista dinamica delle righe della tabella. Le righe standard non hanno il campo "type"
+  // mentre le righe di sezione/nota avranno "type" impostato a "section" o "note".
   List<Map<String, dynamic>> invoiceRows = [];
+
   // Campi visibili configurati tramite il filtro (colonne filtrabili)
   Set<String> visibleFields = {
     'Prodotto',
@@ -24,6 +30,7 @@ class _InvoiceRowsWidgetState extends State<InvoiceRowsWidget> {
     'Sconto %',
     'Imposte',
   };
+
   double _getTotalTableWidth() {
     return _getOrderedFields()
         .fold<double>(0.0, (sum, field) => sum + columnWidths[field]!);
@@ -32,7 +39,7 @@ class _InvoiceRowsWidgetState extends State<InvoiceRowsWidget> {
   // Campi non filtrabili (sempre visibili)
   final List<String> fixedFields = ['Conto', 'Prezzo', 'Importo'];
 
-  // Elenco di tutte le colonne nell'ordine desiderato
+  // Elenco di tutte le colonne nell'ordine desiderato per le righe standard
   final List<String> allColumnsOrder = [
     'Prodotto',
     'Descrizione', // NUOVO CAMPO
@@ -50,64 +57,71 @@ class _InvoiceRowsWidgetState extends State<InvoiceRowsWidget> {
   // Mappa per memorizzare la larghezza di ogni colonna
   late Map<String, double> columnWidths;
 
-double _calculateImponibile() {
-  double imponibile = 0.0;
-  for (var row in invoiceRows) {
+  // CALCOLI PER I TOTALI (escludono le righe di tipo "section" o "note")
+  double _calculateImponibile() {
+    double imponibile = 0.0;
+    for (var row in invoiceRows) {
+      // Salta le righe non standard
+      if (row.containsKey('type') && row['type'] != 'normal') continue;
+      double prezzo = row['Prezzo'] ?? 0.0;
+      int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
+      double discount = row['Sconto %'] ?? 0.0;
+      double net = prezzo * quantita * (1 - discount / 100);
+      imponibile += net;
+    }
+    return imponibile;
+  }
+
+  double _calculateTotale() {
+    double total = _calculateImponibile();
+    Map<double, double> taxTotals = _calculateTaxTotals();
+    for (var tax in taxTotals.values) {
+      total += tax;
+    }
+    return total;
+  }
+
+  double _calculateImporto(Map<String, dynamic> row) {
+    // Se la riga non è standard, restituisco 0.0
+    if (row.containsKey('type') && row['type'] != 'normal') return 0.0;
     double prezzo = row['Prezzo'] ?? 0.0;
     int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
-    double discount = row['Sconto %'] ?? 0.0;
+    double discount = row['Sconto %'] ?? 0.0; // in percentuale
+    double taxRate = row['Imposte'] ?? 0.0;     // in percentuale
     double net = prezzo * quantita * (1 - discount / 100);
-    imponibile += net;
+    return net + (net * taxRate / 100);
   }
-  return imponibile;
-}
-
-double _calculateTotale() {
-  double total = _calculateImponibile();
-  Map<double, double> taxTotals = _calculateTaxTotals();
-  for (var tax in taxTotals.values) {
-    total += tax;
-  }
-  return total;
-}
-
-double _calculateImporto(Map<String, dynamic> row) {
-  double prezzo = row['Prezzo'] ?? 0.0;
-  int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
-  double discount = row['Sconto %'] ?? 0.0;  // in percentuale
-  double taxRate = row['Imposte'] ?? 0.0;      // in percentuale
-  double net = prezzo * quantita * (1 - discount / 100);
-  return net + (net * taxRate / 100);
-}
 
   double _calculateImposte() {
     double imposte = 0.0;
     for (var row in invoiceRows) {
+      if (row.containsKey('type') && row['type'] != 'normal') continue;
       double valoreImposte = row['Imposte'] ?? 0.0; // Default a 0.0
       if (valoreImposte.isFinite) {
-        // Controllo su numeri validi
         imposte += valoreImposte;
       }
     }
-    return imposte.isFinite ? imposte : 0.0; // Restituisci 0.0 se non valido
+    return imposte.isFinite ? imposte : 0.0;
   }
-Map<double, double> _calculateTaxTotals() {
-  Map<double, double> taxTotals = {};
-  for (var row in invoiceRows) {
-    double prezzo = row['Prezzo'] ?? 0.0;
-    int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
-    double discount = row['Sconto %'] ?? 0.0;
-    double taxRate = row['Imposte'] ?? 0.0;
-    double net = prezzo * quantita * (1 - discount / 100);
-    double taxAmount = net * (taxRate / 100);
-    if (taxTotals.containsKey(taxRate)) {
-      taxTotals[taxRate] = taxTotals[taxRate]! + taxAmount;
-    } else {
-      taxTotals[taxRate] = taxAmount;
+
+  Map<double, double> _calculateTaxTotals() {
+    Map<double, double> taxTotals = {};
+    for (var row in invoiceRows) {
+      if (row.containsKey('type') && row['type'] != 'normal') continue;
+      double prezzo = row['Prezzo'] ?? 0.0;
+      int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
+      double discount = row['Sconto %'] ?? 0.0;
+      double taxRate = row['Imposte'] ?? 0.0;
+      double net = prezzo * quantita * (1 - discount / 100);
+      double taxAmount = net * (taxRate / 100);
+      if (taxTotals.containsKey(taxRate)) {
+        taxTotals[taxRate] = taxTotals[taxRate]! + taxAmount;
+      } else {
+        taxTotals[taxRate] = taxAmount;
+      }
     }
+    return taxTotals;
   }
-  return taxTotals;
-}
 
   @override
   void initState() {
@@ -116,9 +130,8 @@ Map<double, double> _calculateTaxTotals() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final screenWidth =
           MediaQuery.of(context).size.width; // Larghezza finestra
-      final totalColumns = allColumnsOrder.length + 1; // Numero di colonne
-      final defaultWidth =
-          screenWidth / totalColumns; // Larghezza equa iniziale
+      final totalColumns = allColumnsOrder.length + 1; // Numero di colonne (più la colonna per la maniglia)
+      final defaultWidth = screenWidth / totalColumns; // Larghezza equa iniziale
       setState(() {
         columnWidths = {for (var col in allColumnsOrder) col: defaultWidth};
       });
@@ -129,13 +142,13 @@ Map<double, double> _calculateTaxTotals() {
   // Una colonna è visibile se è fissa oppure è presente in visibleFields.
   List<String> _getOrderedFields() {
     return allColumnsOrder
-        .where(
-            (col) => fixedFields.contains(col) || visibleFields.contains(col))
+        .where((col) => fixedFields.contains(col) || visibleFields.contains(col))
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
@@ -145,163 +158,142 @@ Map<double, double> _calculateTaxTotals() {
           LayoutBuilder(
             builder: (context, constraints) {
               return Container(
-                  width: constraints.maxWidth,
-                  child: Scrollbar(
+                width: constraints.maxWidth,
+                child: Scrollbar(
+                  controller: _horizontalScrollController,
+                  thumbVisibility: true, // Mostra sempre il thumb
+                  trackVisibility: true, // Mostra la track della scrollbar
+                  thickness: 8.0, // Larghezza della scrollbar
+                  radius: const Radius.circular(4), // Arrotonda gli angoli
+                  scrollbarOrientation: ScrollbarOrientation.bottom, // Scrollbar in basso
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     controller: _horizontalScrollController,
-                    thumbVisibility: true, // Mostra sempre il thumb
-                    trackVisibility: true, // Mostra la track della scrollbar
-                    thickness: 8.0, // Larghezza della scrollbar
-                    radius: const Radius.circular(4), // Arrotonda gli angoli
-                    scrollbarOrientation:
-                        ScrollbarOrientation.bottom, // Scrollbar in basso
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      controller: _horizontalScrollController,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          //minWidth:
-                          //    columnWidths.values
-                          //              .reduce((a, b) => a + b) +
-                          //          100,
-                          maxWidth: columnWidths.values
-                                        .reduce((a, b) => a + b) +
-                                    100, // Larghezza totale della tabella
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Intestazione della tabella
-                            _buildTableHeaderRow(),
-                            const Divider(),
-                            // Righe draggabili in un ConstrainedBox per garantire larghezza minima
-                            ConstrainedBox(
-                              constraints: BoxConstraints(
-                                //minWidth: columnWidths.values
-                                //        .reduce((a, b) => a + b) +
-                                //    100,
-                                maxWidth: columnWidths.values
-                                        .reduce((a, b) => a + b) +
-                                    100,
-                              ),
-                              child: ReorderableListView(
-                                proxyDecorator: (Widget child, int index,
-                                    Animation<double> animation) {
-                                  return Material(
-                                    elevation: 8.0,
-                                    color: Colors.white,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: index % 2 == 0
-                                            ? Colors.white
-                                            : Colors.grey[200],
-                                        border: Border.all(
-                                            color: Colors.teal, width: 2.0),
-                                      ),
-                                      child: child,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        // La larghezza totale della tabella è data dalla somma delle larghezze
+                        // delle colonne standard più uno spazio extra (per il pulsante filtro e altri margini)
+                        maxWidth: columnWidths.values.reduce((a, b) => a + b) + 100,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Intestazione della tabella (per le righe standard)
+                          _buildTableHeaderRow(),
+                          const Divider(),
+                          // Righe (drag & drop)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: columnWidths.values.reduce((a, b) => a + b) + 100,
+                            ),
+                            child: ReorderableListView(
+                              proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                                return Material(
+                                  elevation: 8.0,
+                                  color: Colors.white,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: index % 2 == 0 ? Colors.white : Colors.grey[200],
+                                      border: Border.all(color: Colors.teal, width: 2.0),
                                     ),
-                                  );
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              buildDefaultDragHandles: false,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              onReorder: _onReorder,
+                              padding: EdgeInsets.zero,
+                              children: invoiceRows.asMap().entries.map((entry) {
+                                int index = entry.key;
+                                Map<String, dynamic> row = entry.value;
+                                if (row['id'] == null) {
+                                  row['id'] = UniqueKey();
+                                }
+                                return _buildDataRow(row, index, key: row['id']);
+                              }).toList(),
+                            ),
+                          ),
+                          // Pulsanti di azione (Aggiungi riga, sezione, nota, catalogo)
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Container(width: 40), // Allineamento con la colonna della maniglia
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                onPressed: _addInvoiceRow,
+                                child: const Text(
+                                  "Aggiungi riga",
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                onPressed: _addInvoiceSection,
+                                child: const Text(
+                                  "Aggiungi sezione",
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                onPressed: _addInvoiceNote,
+                                child: const Text(
+                                  "Aggiungi nota",
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              TextButton(
+                                style: TextButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // Logica per "Catalogo"
                                 },
-                                buildDefaultDragHandles: false,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                onReorder: _onReorder,
-                                padding: EdgeInsets.zero,
-                                children:
-                                    invoiceRows.asMap().entries.map((entry) {
-                                  int index = entry.key;
-                                  Map<String, dynamic> row = entry.value;
-                                  if (row['id'] == null) {
-                                    row['id'] = UniqueKey();
-                                  }
-                                  return _buildDataRow(row, index,
-                                      key: row['id']);
-                                }).toList(),
+                                child: const Text(
+                                  "Catalogo",
+                                  style: TextStyle(
+                                    color: Colors.teal,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                            ),
-                            // Pulsanti di azione (Aggiungi riga, sezione, nota, catalogo)
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Container(
-                                    width:
-                                        40), // Allineamento con la colonna della maniglia
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  onPressed: _addInvoiceRow,
-                                  child: const Text(
-                                    "Aggiungi riga",
-                                    style: TextStyle(
-                                      color: Colors.teal,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Logica per "Aggiungi sezione"
-                                  },
-                                  child: const Text(
-                                    "Aggiungi sezione",
-                                    style: TextStyle(
-                                      color: Colors.teal,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Logica per "Aggiungi nota"
-                                  },
-                                  child: const Text(
-                                    "Aggiungi nota",
-                                    style: TextStyle(
-                                      color: Colors.teal,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Logica per "Catalogo"
-                                  },
-                                  child: const Text(
-                                    "Catalogo",
-                                    style: TextStyle(
-                                      color: Colors.teal,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16)
-                          ],
-                        ),
+                            ],
+                          ),
+                          const SizedBox(height: 16)
+                        ],
                       ),
                     ),
-                  ));
+                  ),
+                ),
+              );
             },
           ),
           const SizedBox(height: 20),
@@ -327,23 +319,21 @@ Map<double, double> _calculateTaxTotals() {
               const SizedBox(width: 20),
               // Lato destro: riepilogo dei totali
               Expanded(
-  flex: 1,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: [
-      const Divider(height: 20, thickness: 1),
-      _buildSummaryRow("Imponibile:", _calculateImponibile()),
-      ..._calculateTaxTotals().entries.map((entry) =>
-          _buildSummaryRow("IVA ${entry.key.toStringAsFixed(0)}%:", entry.value)
-      ).toList(),
-      const SizedBox(height: 8),
-      _buildSummaryRow("Totale:", _calculateTotale(), isBold: true),
-      const Divider(height: 20, thickness: 1),
-      _buildSummaryRow("Importo dovuto:", _calculateTotale(), isBold: true),
-    ],
-  ),
-),
-
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Divider(height: 20, thickness: 1),
+                    _buildSummaryRow("Imponibile:", _calculateImponibile()),
+                    ..._calculateTaxTotals().entries.map((entry) => _buildSummaryRow(
+                        "IVA ${entry.key.toStringAsFixed(0)}%:", entry.value)).toList(),
+                    const SizedBox(height: 8),
+                    _buildSummaryRow("Totale:", _calculateTotale(), isBold: true),
+                    const Divider(height: 20, thickness: 1),
+                    _buildSummaryRow("Importo dovuto:", _calculateTotale(), isBold: true),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
@@ -377,7 +367,7 @@ Map<double, double> _calculateTaxTotals() {
     );
   }
 
-  // Costruisce la riga di intestazione della tabella con colonne ridimensionabili
+  // Costruisce l'intestazione della tabella (per le righe standard)
   Widget _buildTableHeaderRow() {
     List<String> orderedFields = _getOrderedFields();
     List<Widget> headerCells = [];
@@ -416,14 +406,12 @@ Map<double, double> _calculateTaxTotals() {
             ),
           ),
           // Resizer: zona a 5 pixel posizionata al margine destro della cella.
-          // Trascinando il resizer si modifica la larghezza della colonna.
           Positioned(
             right: 0,
             top: 0,
             bottom: 0,
             child: MouseRegion(
-              cursor:
-                  SystemMouseCursors.resizeLeftRight, // Aggiungi questa linea
+              cursor: SystemMouseCursors.resizeLeftRight,
               onEnter: (_) => setState(() => _resizerHovering = true),
               onExit: (_) => setState(() => _resizerHovering = false),
               child: GestureDetector(
@@ -447,15 +435,25 @@ Map<double, double> _calculateTaxTotals() {
     );
   }
 
-  // Costruisce una riga dati della tabella, rendendola draggable
-  Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
+  // Costruisce una riga dati della tabella. Se la riga è standard viene costruita
+  // secondo lo schema a colonne, altrimenti (se è di tipo "section" o "note")
+  // viene creato un singolo campo di testo che occupa tutto lo spazio disponibile.
+Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
+  // Calcola la larghezza totale per le righe standard:
+  // Si sommano le larghezze delle colonne visibili e si aggiungono 100 pixel
+  // (40 per il drag handle e 60 per il pulsante di eliminazione).
+  final double totalWidth = _getOrderedFields()
+      .fold(0.0, (sum, field) => sum + (columnWidths[field] ?? 0)) + 100;
+
+  // Se la riga è di tipo "section" o "note", applica il layout specifico
+  if (row.containsKey('type') && row['type'] != 'normal') {
     return Container(
       key: key,
-      color:
-          index % 2 == 0 ? Colors.white : Colors.grey[200], // Sfondo alternato
+      width: totalWidth,  // Forza la stessa larghezza delle righe standard
+      color: index % 2 == 0 ? Colors.white : Colors.grey[200],
       child: Row(
         children: [
-          // Colonna per la maniglia di drag (icona a 3 linee posizionata a sinistra)
+          // Colonna per la maniglia di drag (larghezza fissa 40)
           Container(
             width: 40,
             alignment: Alignment.center,
@@ -464,9 +462,23 @@ Map<double, double> _calculateTaxTotals() {
               child: const Icon(Icons.menu),
             ),
           ),
-          // Celle dati per ogni colonna visibile, con larghezza personalizzata
-          ..._buildOrderedFieldInputs(row),
-          // Colonna extra: icona per eliminare la riga
+          // Campo di testo con larghezza fissa: totale meno 100 (40+60)
+          Container(
+            width: totalWidth - 100,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: row['type'] == 'section' ? "Sezione" : "Nota",
+                border: InputBorder.none,
+              ),
+              onChanged: (value) => setState(() {
+                row['text'] = value;
+              }),
+              controller: TextEditingController(text: row['text']),
+              maxLines: null,
+            ),
+          ),
+          // Colonna extra per il pulsante di eliminazione (larghezza fissa 60)
           Container(
             alignment: Alignment.center,
             width: 60,
@@ -479,6 +491,35 @@ Map<double, double> _calculateTaxTotals() {
       ),
     );
   }
+
+  // Righe standard (nessuna modifica)
+  return Container(
+    key: key,
+    color: index % 2 == 0 ? Colors.white : Colors.grey[200],
+    child: Row(
+      children: [
+        Container(
+          width: 40,
+          alignment: Alignment.center,
+          child: ReorderableDragStartListener(
+            index: index,
+            child: const Icon(Icons.menu),
+          ),
+        ),
+        ..._buildOrderedFieldInputs(row),
+        Container(
+          alignment: Alignment.center,
+          width: 60,
+          child: IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _deleteInvoiceRow(index),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   // Costruisce le celle dati per ogni colonna visibile, utilizzando la larghezza memorizzata
   List<Widget> _buildOrderedFieldInputs(Map<String, dynamic> row) {
@@ -493,7 +534,7 @@ Map<double, double> _calculateTaxTotals() {
     }).toList();
   }
 
-  // Restituisce il widget per la cella in base al tipo di campo
+  // Restituisce il widget per la cella in base al tipo di campo (solo per righe standard)
   Widget _buildCellInput(String field, Map<String, dynamic> row) {
     switch (field) {
       case 'Prodotto':
@@ -564,8 +605,7 @@ Map<double, double> _calculateTaxTotals() {
     }
   }
 
-  // Mostra il dialog per selezionare i campi visibili,
-  // aggiornando immediatamente i checkbox grazie a StatefulBuilder
+  // Mostra il dialog per selezionare i campi visibili (solo per le righe standard)
   void _showFieldFilterDialog() {
     showDialog(
       context: context,
@@ -618,11 +658,12 @@ Map<double, double> _calculateTaxTotals() {
     );
   }
 
-  // Aggiunge una nuova riga alla tabella
+  // Aggiunge una nuova riga standard alla tabella
   void _addInvoiceRow() {
     setState(() {
       invoiceRows.add({
         'id': UniqueKey(),
+        // Per le righe standard non impostiamo esplicitamente "type" (oppure si potrebbe usare "normal")
         'Prodotto': '',
         'Descrizione': '', // NUOVO CAMPO
         'Conto': '',
@@ -634,6 +675,28 @@ Map<double, double> _calculateTaxTotals() {
         'Imposte': 0.0,
         'Prezzo': 0.0,
         'Importo': 0.0,
+      });
+    });
+  }
+
+  // Aggiunge una nuova riga di sezione (schema diverso: un solo campo di testo)
+  void _addInvoiceSection() {
+    setState(() {
+      invoiceRows.add({
+        'id': UniqueKey(),
+        'type': 'section',
+        'text': '',
+      });
+    });
+  }
+
+  // Aggiunge una nuova riga di nota (schema diverso: un solo campo di testo)
+  void _addInvoiceNote() {
+    setState(() {
+      invoiceRows.add({
+        'id': UniqueKey(),
+        'type': 'note',
+        'text': '',
       });
     });
   }

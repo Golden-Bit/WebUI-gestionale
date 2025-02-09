@@ -39,7 +39,7 @@ OverlayEntry createOverlayMenu({
                             padding:
                                 const EdgeInsets.all(8.0), // Margini interni
                             child: Column(
-                              spacing: 0,
+                              //spacing: 0,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Row(
@@ -159,7 +159,7 @@ OverlayEntry createOverlayMenu({
                             padding:
                                 const EdgeInsets.all(8.0), // Margini interni
                             child: Column(
-                              spacing: 0,
+                              //spacing: 0,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Row(
@@ -246,7 +246,7 @@ OverlayEntry createOverlayMenu({
                             padding:
                                 const EdgeInsets.all(8.0), // Margini interni
                             child: Column(
-                              spacing: 0,
+                              //spacing: 0,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Row(
