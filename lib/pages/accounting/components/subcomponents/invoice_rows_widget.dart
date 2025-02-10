@@ -1,7 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/accounting/components/invoice_editor.dart';
+
+
+// Elenco di opzioni per il campo "Conto" (esempio, completa l'elenco come necessario)
+const List<String> contoOptions = [
+  "110100 Costi di impianto",
+  "110600 Software",
+  "110800 Avviamento",
+  "111100 Fondo ammortamento costi di impianto",
+  "111600 Fondo ammortamento software",
+  "111800 Fondo ammortamento avviamento",
+  "120100 Fabbricati",
+  "120200 Impianti e macchinari",
+  "120400 Attrezzature commerciali",
+  "120500 Macchine d'ufficio",
+  // ... altri valori
+];
 
 class InvoiceRowsWidget extends StatefulWidget {
-  const InvoiceRowsWidget({Key? key}) : super(key: key);
+  /// Lista delle righe fattura da visualizzare (stato esterno)
+  final List<Map<String, dynamic>> invoiceRows;
+  /// Callback che notifica il widget padre ogni volta che la lista viene modificata
+  final ValueChanged<List<Map<String, dynamic>>> onRowsChanged;
+
+  const InvoiceRowsWidget({
+    Key? key,
+    required this.invoiceRows,
+    required this.onRowsChanged,
+  }) : super(key: key);
 
   @override
   _InvoiceRowsWidgetState createState() => _InvoiceRowsWidgetState();
@@ -17,7 +43,7 @@ bool get wantKeepAlive => true;
   bool _resizerHovering = false;
   // Lista dinamica delle righe della tabella. Le righe standard non hanno il campo "type"
   // mentre le righe di sezione/nota avranno "type" impostato a "section" o "note".
-  List<Map<String, dynamic>> invoiceRows = [];
+  //List<Map<String, dynamic>> invoiceRows = [];
 
   // Campi visibili configurati tramite il filtro (colonne filtrabili)
   Set<String> visibleFields = {
@@ -60,7 +86,7 @@ bool get wantKeepAlive => true;
   // CALCOLI PER I TOTALI (escludono le righe di tipo "section" o "note")
   double _calculateImponibile() {
     double imponibile = 0.0;
-    for (var row in invoiceRows) {
+    for (var row in widget.invoiceRows) {
       // Salta le righe non standard
       if (row.containsKey('type') && row['type'] != 'normal') continue;
       double prezzo = row['Prezzo'] ?? 0.0;
@@ -87,14 +113,14 @@ bool get wantKeepAlive => true;
     double prezzo = row['Prezzo'] ?? 0.0;
     int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
     double discount = row['Sconto %'] ?? 0.0; // in percentuale
-    double taxRate = row['Imposte'] ?? 0.0;     // in percentuale
+    //double taxRate = row['Imposte'] ?? 0.0;     // in percentuale
     double net = prezzo * quantita * (1 - discount / 100);
-    return net + (net * taxRate / 100);
+    return net ;//+ (net * taxRate / 100);
   }
 
   double _calculateImposte() {
     double imposte = 0.0;
-    for (var row in invoiceRows) {
+    for (var row in widget.invoiceRows) {
       if (row.containsKey('type') && row['type'] != 'normal') continue;
       double valoreImposte = row['Imposte'] ?? 0.0; // Default a 0.0
       if (valoreImposte.isFinite) {
@@ -106,7 +132,7 @@ bool get wantKeepAlive => true;
 
   Map<double, double> _calculateTaxTotals() {
     Map<double, double> taxTotals = {};
-    for (var row in invoiceRows) {
+    for (var row in widget.invoiceRows) {
       if (row.containsKey('type') && row['type'] != 'normal') continue;
       double prezzo = row['Prezzo'] ?? 0.0;
       int quantita = row['Quantità'] is int ? row['Quantità'] : 1;
@@ -164,6 +190,7 @@ bool get wantKeepAlive => true;
                   thumbVisibility: true, // Mostra sempre il thumb
                   trackVisibility: true, // Mostra la track della scrollbar
                   thickness: 8.0, // Larghezza della scrollbar
+                  
                   radius: const Radius.circular(4), // Arrotonda gli angoli
                   scrollbarOrientation: ScrollbarOrientation.bottom, // Scrollbar in basso
                   child: SingleChildScrollView(
@@ -205,7 +232,7 @@ bool get wantKeepAlive => true;
                               physics: const NeverScrollableScrollPhysics(),
                               onReorder: _onReorder,
                               padding: EdgeInsets.zero,
-                              children: invoiceRows.asMap().entries.map((entry) {
+                              children: widget.invoiceRows.asMap().entries.map((entry) {
                                 int index = entry.key;
                                 Map<String, dynamic> row = entry.value;
                                 if (row['id'] == null) {
@@ -473,6 +500,7 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
               ),
               onChanged: (value) => setState(() {
                 row['text'] = value;
+                widget.onRowsChanged(widget.invoiceRows);
               }),
               controller: TextEditingController(text: row['text']),
               maxLines: null,
@@ -537,19 +565,31 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
   // Restituisce il widget per la cella in base al tipo di campo (solo per righe standard)
   Widget _buildCellInput(String field, Map<String, dynamic> row) {
     switch (field) {
-      case 'Prodotto':
-      case 'Conto':
-        return TextField(
-          decoration: const InputDecoration(border: InputBorder.none),
-          onChanged: (value) => setState(() {
-            row[field] = value;
-          }),
-        );
+case 'Prodotto':
+  return TextField(
+    decoration: const InputDecoration(border: InputBorder.none),
+    onChanged: (value) => setState(() {
+      row['Prodotto'] = value;
+      widget.onRowsChanged(widget.invoiceRows);
+    }),
+  );
+case 'Conto':
+  return CustomDropdown(
+    items: contoOptions,
+    value: row['Conto'] ?? contoOptions[0],
+    onChanged: (value) {
+      setState(() {
+        row['Conto'] = value;
+        widget.onRowsChanged(widget.invoiceRows);
+      });
+    },
+  );
       case 'Descrizione': // NUOVO CAMPO
         return TextField(
           decoration: const InputDecoration(border: InputBorder.none),
           onChanged: (value) => setState(() {
             row['Descrizione'] = value;
+            widget.onRowsChanged(widget.invoiceRows);
           }),
         );
       case 'Etichetta':
@@ -557,6 +597,7 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
           decoration: const InputDecoration(border: InputBorder.none),
           onChanged: (value) => setState(() {
             row['Etichetta'] = value;
+            widget.onRowsChanged(widget.invoiceRows);
           }),
         );
       case 'Data inizio':
@@ -572,6 +613,7 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
             if (selectedDate != null) {
               setState(() {
                 row[field] = selectedDate;
+                widget.onRowsChanged(widget.invoiceRows);
               });
             }
           },
@@ -592,6 +634,7 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
             row[field] = double.tryParse(value) ?? 0.0;
             // Ricalcola l'importo in base ai nuovi valori
             row['Importo'] = _calculateImporto(row);
+            widget.onRowsChanged(widget.invoiceRows);
           }),
         );
       case 'Importo':
@@ -659,63 +702,60 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
   }
 
   // Aggiunge una nuova riga standard alla tabella
-  void _addInvoiceRow() {
-    setState(() {
-      invoiceRows.add({
-        'id': UniqueKey(),
-        // Per le righe standard non impostiamo esplicitamente "type" (oppure si potrebbe usare "normal")
-        'Prodotto': '',
-        'Descrizione': '', // NUOVO CAMPO
-        'Conto': '',
-        'Etichetta': '',
-        'Data inizio': null,
-        'Data fine': null,
-        'Quantità': 1,
-        'Sconto %': 0.0,
-        'Imposte': 0.0,
-        'Prezzo': 0.0,
-        'Importo': 0.0,
-      });
-    });
-  }
+void _addInvoiceRow() {
+  List<Map<String, dynamic>> newRows = List.from(widget.invoiceRows);
+  newRows.add({
+    'id': UniqueKey(),
+    'Prodotto': '',
+    'Descrizione': '',
+    'Conto': contoOptions[0],
+    'Etichetta': '',
+    'Data inizio': null,
+    'Data fine': null,
+    'Quantità': 1,
+    'Sconto %': 0.0,
+    'Imposte': 0.0,
+    'Prezzo': 0.0,
+    'Importo': 0.0,
+  });
+  widget.onRowsChanged(newRows);
+}
 
   // Aggiunge una nuova riga di sezione (schema diverso: un solo campo di testo)
-  void _addInvoiceSection() {
-    setState(() {
-      invoiceRows.add({
-        'id': UniqueKey(),
-        'type': 'section',
-        'text': '',
-      });
-    });
-  }
+void _addInvoiceSection() {
+  List<Map<String, dynamic>> newRows = List.from(widget.invoiceRows);
+  newRows.add({
+    'id': UniqueKey(),
+    'type': 'section',
+    'text': '',
+  });
+  widget.onRowsChanged(newRows);
+}
 
   // Aggiunge una nuova riga di nota (schema diverso: un solo campo di testo)
-  void _addInvoiceNote() {
-    setState(() {
-      invoiceRows.add({
-        'id': UniqueKey(),
-        'type': 'note',
-        'text': '',
-      });
-    });
-  }
+void _addInvoiceNote() {
+  List<Map<String, dynamic>> newRows = List.from(widget.invoiceRows);
+  newRows.add({
+    'id': UniqueKey(),
+    'type': 'note',
+    'text': '',
+  });
+  widget.onRowsChanged(newRows);
+}
 
   // Elimina una riga dalla tabella
-  void _deleteInvoiceRow(int index) {
-    setState(() {
-      invoiceRows.removeAt(index);
-    });
-  }
+void _deleteInvoiceRow(int index) {
+  List<Map<String, dynamic>> newRows = List.from(widget.invoiceRows);
+  newRows.removeAt(index);
+  widget.onRowsChanged(newRows);
+}
 
   // Callback per la riorganizzazione delle righe tramite drag & drop
-  void _onReorder(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final movedRow = invoiceRows.removeAt(oldIndex);
-      invoiceRows.insert(newIndex, movedRow);
-    });
-  }
+void _onReorder(int oldIndex, int newIndex) {
+  List<Map<String, dynamic>> newRows = List.from(widget.invoiceRows);
+  if (newIndex > oldIndex) newIndex -= 1;
+  final movedRow = newRows.removeAt(oldIndex);
+  newRows.insert(newIndex, movedRow);
+  widget.onRowsChanged(newRows);
+}
 }

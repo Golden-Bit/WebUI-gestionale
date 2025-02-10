@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/accounting/components/subcomponents/AccountingMovementsWidget.dart';
 import 'package:flutter_app/pages/accounting/components/subcomponents/invoice_rows_widget.dart';
 
 class InvoiceDetailsWidget extends StatefulWidget {
@@ -12,7 +13,7 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
     with SingleTickerProviderStateMixin {
   // Tab controller
   late TabController _tabController;
-
+List<Map<String, dynamic>> invoiceRows = [];
   // Dropdown values
   String selectedCustomer = "Seleziona cliente";
   String selectedRegister = "Fatture cliente";
@@ -20,7 +21,7 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
   // Date values
   DateTime? invoiceDate;
   DateTime? dueDate;
-
+List<Map<String, dynamic>> movimentsRows = []; 
   // Text editing controller
   final TextEditingController invoiceIdentifierController =
       TextEditingController(text: "INV/2025/00001");
@@ -214,17 +215,17 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
                           ),
                           Expanded(
                             child: CustomDropdown(
-                          items: [
-                            "fatture cliente",
-                            "altro registro",
-                          ],
-                          value: selectedRegister,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRegister = value;
-                            });
-                          },
-                        ),
+                              items: [
+                                "fatture cliente",
+                                "altro registro",
+                              ],
+                              value: selectedRegister,
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedRegister = value;
+                                });
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -252,8 +253,28 @@ class _InvoiceDetailsWidgetState extends State<InvoiceDetailsWidget>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  const InvoiceRowsWidget(), // Usa il widget esterno per Righe Fattura
-                  _buildPlaceholderContent("Movimenti Contabili"),
+                  InvoiceRowsWidget(
+  invoiceRows: invoiceRows,
+  onRowsChanged: (newRows) {
+    setState(() {
+      invoiceRows = newRows;
+    });
+  },
+), // Usa il widget esterno per Righe Fattura
+AccountingMovementsWidget(
+  invoiceRows: invoiceRows,
+  movimentsRows: movimentsRows, // Passaggio delle righe movimenti
+  onInvoiceRowsChanged: (newInvoiceRows) {
+    setState(() {
+      invoiceRows = newInvoiceRows;
+    });
+  },
+  onMovementsChanged: (newMovementsRows) {
+    setState(() {
+      movimentsRows = newMovementsRows;
+    });
+  },
+), // Secondo tab: "Movimenti contabili"
                   _buildPlaceholderContent("Altre Informazioni"),
                   _buildPlaceholderContent("Fatturazione Elettronica"),
                 ],
