@@ -1,4 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/pages/accounting/accounting_records_view.dart';
+import 'package:flutter_app/pages/accounting/analytic_movements_view.dart';
+import 'package:flutter_app/pages/accounting/assets_view.dart';
+import 'package:flutter_app/pages/accounting/entIties_view.dart';
+import 'package:flutter_app/pages/accounting/grouped_payments_view.dart';
+import 'package:flutter_app/pages/accounting/invoice_view.dart';
+import 'package:flutter_app/pages/accounting/loans_view.dart';
+import 'package:flutter_app/pages/accounting/payment_view.dart';
+import 'package:flutter_app/pages/accounting/products_view.dart';
+import 'package:flutter_app/pages/accounting/transfers_view.dart';
 
 class AppbarActionsMenu extends StatelessWidget {
   final String menuTitle;
@@ -16,90 +26,141 @@ class AppbarActionsMenu extends StatelessWidget {
       "Clienti": [
         _buildHoverableListTile(
           title: "Fatture",
-          onTap: onTapActions["Fatture"] ?? () {},
+          onTap: onTapActions["Fatture"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => InvoiceViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Note di credito",
-          onTap: onTapActions["Note di credito"] ?? () {},
+          onTap: onTapActions["Note di credito"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => InvoiceViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Pagamenti",
-          onTap: onTapActions["Pagamenti"] ?? () {},
+          onTap: onTapActions["Pagamenti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PaymentViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Pagamenti raggruppati",
-          onTap: onTapActions["Pagamenti raggruppati"] ?? () {},
+          onTap: onTapActions["Pagamenti raggruppati"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => GroupedPaymentsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Prodotti",
-          onTap: onTapActions["Prodotti"] ?? () {},
+          onTap: onTapActions["Prodotti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProductsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Clienti",
-          onTap: onTapActions["Clienti"] ?? () {},
+          onTap: onTapActions["Clienti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => EntitiesViewPage()),
+      ),
         ),
       ],
       //
       "Fornitori": [
         _buildHoverableListTile(
           title: "Fatture fornitore",
-          onTap: onTapActions["Fatture fornitore"] ?? () {},
+          onTap: onTapActions["Fatture fornitore"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => InvoiceViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Note di credito",
-          onTap: onTapActions["Note di credito"] ?? () {},
+          onTap: onTapActions["Note di credito"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => InvoiceViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Pagamenti",
-          onTap: onTapActions["Pagamenti"] ?? () {},
+          onTap: onTapActions["Pagamenti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PaymentViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Pagamenti raggruppati",
-          onTap: onTapActions["Pagamenti raggruppati"] ?? () {},
+          onTap: onTapActions["Pagamenti raggruppati"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => GroupedPaymentsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Prodotti",
-          onTap: onTapActions["Prodotti"] ?? () {},
+          onTap: onTapActions["Prodotti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProductsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Fornitori",
-          onTap: onTapActions["Fornitori"] ?? () {},
+          onTap: onTapActions["Fornitori"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => EntitiesViewPage()),
+      ),
         ),
       ],
       //
       "Contabilità": [
         _buildHoverableListTile(
           title: "Registrazioni contabili",
-          onTap: onTapActions["Registrazioni contabili"] ?? () {},
+          onTap: onTapActions["Registrazioni contabili"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AccountingRecordsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Movimenti contabili",
-          onTap: onTapActions["Movimenti contabili"] ?? () {},
+          onTap: onTapActions["Movimenti contabili"] ?? () => {},
         ),
         _buildHoverableListTile(
           title: "Trasferimenti",
-          onTap: onTapActions["Trasferimenti"] ?? () {},
+          onTap: onTapActions["Trasferimenti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TransfersViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Movimenti analitici",
-          onTap: onTapActions["Movimenti analitici"] ?? () {},
+          onTap: onTapActions["Movimenti analitici"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AnalyticMovementsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Cespiti",
-          onTap: onTapActions["Cespiti"] ?? () {},
+          onTap: onTapActions["Cespiti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AssetsViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Prestiti",
-          onTap: onTapActions["Prestiti"] ?? () {},
+          onTap: onTapActions["Prestiti"] ?? () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LoansViewPage()),
+      ),
         ),
         _buildHoverableListTile(
           title: "Riconcilia",
-          onTap: onTapActions["Riconcilia"] ?? () {},
+          onTap: onTapActions["Riconcilia"] ?? () => {}
         ),
         _buildHoverableListTile(
           title: "Data blocco",
-          onTap: onTapActions["Data blocco"] ?? () {},
-        ),
+          onTap: onTapActions["Data blocco"] ?? () => {}
+          )
       ],
       //
       "Rendicontazione": [
@@ -113,6 +174,7 @@ class AppbarActionsMenu extends StatelessWidget {
           title: "Conto economico",
           onTap: onTapActions["Conto economico"] ?? () {},
           horizontalPadding: 16,
+          
         ),
         _buildHoverableListTile(
           title: "Rendiconto finanziario",

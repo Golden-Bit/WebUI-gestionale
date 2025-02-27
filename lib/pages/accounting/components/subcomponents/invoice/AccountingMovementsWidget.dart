@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/accounting/components/invoice_editor.dart'; // Assicurati che qui sia presente anche il CustomDropdown
+import 'package:flutter_app/pages/accounting/components/invoice/invoice_editor.dart'; // Assicurati che qui sia presente anche il CustomDropdown
+import 'dart:math' as math;
 
 /// Elenco di opzioni per il campo "Conto"
 const List<String> contoOptions = [
@@ -17,7 +18,6 @@ const List<String> contoOptions = [
 
 /// Elenco di opzioni per il campo "Griglie imposte"
 const List<String> imposteOptions = [
-  "1-80 / 332 -02 Imposte Italia",
   "+02 Imposte Italia",
   "-03 Imposte Italia",
   "+03 Imposte Italia",
@@ -121,7 +121,7 @@ class _AccountingMovementsWidgetState extends State<AccountingMovementsWidget>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final screenWidth = MediaQuery.of(context).size.width;
       setState(() {
-        double defaultWidth = screenWidth / movementColumnOrder.length;
+        double defaultWidth = (screenWidth - 128) / movementColumnOrder.length * 0.67;
         movementColumnWidths = {
           for (var col in movementColumnOrder) col: defaultWidth,
         };
@@ -182,7 +182,7 @@ class _AccountingMovementsWidgetState extends State<AccountingMovementsWidget>
             'Imposte': invoice['Imposte'] ?? 0.0,
             'Griglie imposte': invoice.containsKey('Griglie imposte')
                 ? invoice['Griglie imposte']
-                : imposteOptions[0],
+                : "+02 Imposte Italia",
   'Dare': 0.0,
   'Avere': invoice['Importo'] ?? 0.0,
             'Data di sconto': invoice.containsKey('Data di sconto')
@@ -289,7 +289,7 @@ class _AccountingMovementsWidgetState extends State<AccountingMovementsWidget>
           'Imposte': tax,
           'Data di sconto': null,
           'Importo dello sconto': 0.0,
-          'Griglie imposte': "",
+          'Griglie imposte': "+4v Imposte Italia",
         };
       } else {
         _extraRows[tax]!['Etichetta'] = "${tax.toString()}%";
@@ -365,19 +365,25 @@ for (var m in computedMovements) {
     super.build(context); // Necessario per AutomaticKeepAliveClientMixin
     final localMovementsRows = _computeLocalMovementsRowsWithExtra();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.vertical,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: MediaQuery.of(context).size.width,
-            maxWidth: movementColumnWidths.values.fold(0, (sum, w) => sum + w),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMovementsTableHeader(),
+// Calcola la larghezza totale delle colonne
+final double computedWidth = movementColumnWidths.values.fold(0, (sum, w) => sum + w);
+// Imposta la larghezza di constraint come il massimo tra la larghezza dello schermo e quella calcolata
+final double widthConstraint = math.max(MediaQuery.of(context).size.width, computedWidth); 
+
+return SingleChildScrollView(
+  scrollDirection: Axis.vertical,
+  child: SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        // Fissa sia il minWidth che il maxWidth a widthConstraint
+        minWidth: widthConstraint,
+        maxWidth: widthConstraint,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildMovementsTableHeader(),
               const Divider(),
               ListView.builder(
                 shrinkWrap: true,
@@ -412,11 +418,12 @@ for (var m in computedMovements) {
               ),
               // AGGIUNTA DI 400 PIXEL DI SPAZIO LIBERO
               const SizedBox(height: 400),
-            ],
-          ),
-        ),
+        ],
       ),
-    );
+    ),
+  ),
+);
+
   }
 
   @override

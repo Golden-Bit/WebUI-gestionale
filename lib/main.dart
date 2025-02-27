@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/components/workspace_body.dart';
-import 'package:flutter_app/pages/accounting/accounting.dart';
+import 'package:flutter_app/pages/accounting/payment_view.dart';
+//import 'package:flutter_app/pages/accounting/products.dart';
+//import 'package:flutter_app/pages/accounting/entities.dart';
+//import 'package:flutter_app/pages/accounting/grouped_payments.dart';
+//import 'package:flutter_app/pages/accounting/loans.dart';
+//import 'package:flutter_app/pages/accounting/transfers.dart';
+//import 'package:flutter_app/pages/accounting/assets.dart';
+//import 'package:flutter_app/pages/accounting/analytic_movements.dart';
+//import 'package:flutter_app/pages/accounting/accounting_records.dart';
+//import 'package:flutter_app/pages/accounting/payment.dart';
+//import 'package:flutter_app/pages/accounting/invoice.dart';
 import 'package:flutter_app/pages/login/login.dart';
 import 'package:flutter_app/pages/register/register.dart';
 import 'package:flutter_app/pages/task_board/components/workspace_helpers.dart';
@@ -19,7 +29,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: AccountingPage(), //LoginPage(),
+      home: PaymentViewPage(), //LoginPage(),
       routes: {
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),

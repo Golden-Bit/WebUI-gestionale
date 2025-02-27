@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/accounting/components/invoice_editor.dart';
+import 'package:flutter_app/pages/accounting/components/products_view/products_viewer.dart';
 
 /*Widget buildListPlaceholder() {
   return const Column(
@@ -16,7 +16,7 @@ import 'package:flutter_app/pages/accounting/components/invoice_editor.dart';
 }*/
 
 Widget buildListPlaceholder() {
-  return InvoiceDetailsWidget();
+  return EntityDetailsWidget();
 }
 
 Widget buildKanbanPlaceholder() {

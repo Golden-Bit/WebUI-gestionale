@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/accounting/components/invoice_editor.dart';
+import 'package:flutter_app/pages/accounting/components/invoice/invoice_editor.dart';
 
 
 // Elenco di opzioni per il campo "Conto" (esempio, completa l'elenco come necessario)
@@ -82,7 +82,19 @@ bool get wantKeepAlive => true;
 
   // Mappa per memorizzare la larghezza di ogni colonna
   late Map<String, double> columnWidths;
-
+TextEditingController _getTextEditingController(Map<String, dynamic> row) {
+  // Se il controller non è già stato creato, crealo e salvalo nella mappa
+  if (row['controller'] == null) {
+    row['controller'] = TextEditingController(text: row['text'] ?? "");
+  } else {
+    // Se il testo del controller non corrisponde a quello salvato nella riga,
+    // sincronizza il controller (opzionale, a seconda della logica)
+    if (row['controller'].text != (row['text'] ?? "")) {
+      row['controller'].text = row['text'] ?? "";
+    }
+  }
+  return row['controller'];
+}
   // CALCOLI PER I TOTALI (escludono le righe di tipo "section" o "note")
   double _calculateImponibile() {
     double imponibile = 0.0;
@@ -157,7 +169,7 @@ bool get wantKeepAlive => true;
       final screenWidth =
           MediaQuery.of(context).size.width; // Larghezza finestra
       final totalColumns = allColumnsOrder.length + 1; // Numero di colonne (più la colonna per la maniglia)
-      final defaultWidth = screenWidth / totalColumns; // Larghezza equa iniziale
+      final defaultWidth = (screenWidth - 128) / totalColumns * 0.67; // Larghezza equa iniziale
       setState(() {
         columnWidths = {for (var col in allColumnsOrder) col: defaultWidth};
       });
@@ -200,7 +212,7 @@ bool get wantKeepAlive => true;
                       constraints: BoxConstraints(
                         // La larghezza totale della tabella è data dalla somma delle larghezze
                         // delle colonne standard più uno spazio extra (per il pulsante filtro e altri margini)
-                        maxWidth: columnWidths.values.reduce((a, b) => a + b) + 100,
+                        maxWidth: (columnWidths.values.reduce((a, b) => a + b) + 100 ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +223,7 @@ bool get wantKeepAlive => true;
                           // Righe (drag & drop)
                           ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: columnWidths.values.reduce((a, b) => a + b) + 100,
+                              maxWidth: (columnWidths.values.reduce((a, b) => a + b) + 100),
                             ),
                             child: ReorderableListView(
                               proxyDecorator: (Widget child, int index, Animation<double> animation) {
@@ -493,18 +505,20 @@ Widget _buildDataRow(Map<String, dynamic> row, int index, {Key? key}) {
           Container(
             width: totalWidth - 100,
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: row['type'] == 'section' ? "Sezione" : "Nota",
-                border: InputBorder.none,
-              ),
-              onChanged: (value) => setState(() {
-                row['text'] = value;
-                widget.onRowsChanged(widget.invoiceRows);
-              }),
-              controller: TextEditingController(text: row['text']),
-              maxLines: null,
-            ),
+            child: // Campo di testo per sezione/nota (modificato)
+TextField(
+  decoration: InputDecoration(
+    hintText: row['type'] == 'section' ? "Sezione" : "Nota",
+    border: InputBorder.none,
+  ),
+  onChanged: (value) => setState(() {
+    row['text'] = value;
+    widget.onRowsChanged(widget.invoiceRows);
+  }),
+  controller: _getTextEditingController(row),
+  maxLines: null,
+),
+
           ),
           // Colonna extra per il pulsante di eliminazione (larghezza fissa 60)
           Container(

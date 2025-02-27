@@ -1,38 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/pages/accounting/components/appbar.dart';
+import 'package:flutter_app/pages/accounting/components/appbar_v2.dart';
 import 'package:flutter_app/pages/accounting/components/appbar_actions_menu.dart';
 import 'package:flutter_app/pages/accounting/components/search_menu.dart';
-import 'package:flutter_app/pages/accounting/components/body.dart';
+import 'package:flutter_app/pages/accounting/components/payment_view/payment_body.dart';
+import 'package:flutter_app/pages/accounting/products.dart';
 
-class AccountingPage extends StatefulWidget {
-  const AccountingPage({Key? key}) : super(key: key);
+class ProductsViewPage extends StatefulWidget {
+  const ProductsViewPage({Key? key}) : super(key: key);
 
   @override
-  State<AccountingPage> createState() => _AccountingPageState();
+  State<ProductsViewPage> createState() => _ProductsViewPageState();
 }
 
-class _AccountingPageState extends State<AccountingPage> {
-  String selectedFilter = "Fatture"; // Per gestire i filtri selezionati
-  int selectedViewIndex = 0; // Indice per gestire lo stato dei pulsanti
-  final LayerLink _searchLayerLink = LayerLink(); // LayerLink per la barra di ricerca
-  final LayerLink _clientiLayerLink = LayerLink(); // LayerLink per il pulsante "Clienti"
-  final LayerLink _fornitoriLayerLink = LayerLink(); // LayerLink per il pulsante "Fornitori"
-  final LayerLink _contabilitaLayerLink = LayerLink(); // LayerLink per il pulsante "Contabilità"
-  final LayerLink _rendicontazioneLayerLink = LayerLink(); // LayerLink per il pulsante "Rendicontazione"
-  final LayerLink _configurazioneLayerLink = LayerLink(); // LayerLink per il pulsante "Configurazione"
-  OverlayEntry? _searchMenuOverlay; // Overlay menu entry
+class _ProductsViewPageState extends State<ProductsViewPage> {
+  //String selectedFilter = "Fatture"; // Per gestire i filtri selezionati
+  int selectedViewIndex = 0;         // Indice per gestire lo stato dei pulsanti
+
+  // -------------------------- VARIABILI DI PAGINAZIONE --------------------------
+  int currentPage = 0;    // Pagina corrente
+  int pageSize = 30;      // Quanti elementi per pagina
+  int totalItems = 100;   // Totale di default (aggiornato via callback)
+
+  final LayerLink _searchLayerLink = LayerLink(); 
+  final LayerLink _clientiLayerLink = LayerLink();
+  final LayerLink _fornitoriLayerLink = LayerLink();
+  final LayerLink _contabilitaLayerLink = LayerLink();
+  final LayerLink _rendicontazioneLayerLink = LayerLink();
+  final LayerLink _configurazioneLayerLink = LayerLink();
+
+  OverlayEntry? _searchMenuOverlay;  // Overlay menu entry
   OverlayEntry? _actionsMenuOverlay; // Overlay per il menu a tendina
   final FocusNode _searchFocusNode = FocusNode(); // Focus per la barra di ricerca
 
   void _showSearchMenu() {
     if (_searchMenuOverlay != null) return;
-
     _searchMenuOverlay = createOverlayMenu(
       context: context,
       layerLink: _searchLayerLink,
       closeOverlayMenu: _closeSearchMenu,
     );
-
     Overlay.of(context).insert(_searchMenuOverlay!);
   }
 
@@ -51,15 +57,10 @@ class _AccountingPageState extends State<AccountingPage> {
       content: AppbarActionsMenu(
         menuTitle: buttonTitle,
         onTapActions: {
-          "Fatture": () => print("Fatture selezionato"),
-          "Note di credito": () => print("Note di credito selezionato"),
-          "Pagamenti": () => print("Pagamenti selezionato"),
-          "Ordini": () => print("Ordini selezionato"),
-          "Bilancio": () => print("Bilancio selezionato"),
+
         },
       ),
     );
-
     Overlay.of(context).insert(_actionsMenuOverlay!);
   }
 
@@ -78,6 +79,7 @@ class _AccountingPageState extends State<AccountingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      // La CustomAppBar ha i parametri di paginazione e la callback
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120), // Altezza personalizzata
         child: CustomAppBar(
@@ -87,13 +89,16 @@ class _AccountingPageState extends State<AccountingPage> {
           showOverlayMenu: _showSearchMenu,
           closeOverlayMenu: _closeSearchMenu,
           selectedViewIndex: selectedViewIndex,
+                    onNuovoPressed: () => {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => ProductsEditorPage()))
+          },
+          onCaricaPressed: () => {},
           onViewChanged: (index) {
             setState(() {
               selectedViewIndex = index;
             });
           },
           onDropDownMenuButtonPressed: (buttonTitle) {
-            // Collega il menu al pulsante corretto
             LayerLink? link;
             switch (buttonTitle) {
               case "Clienti":
@@ -112,47 +117,73 @@ class _AccountingPageState extends State<AccountingPage> {
                 link = _configurazioneLayerLink;
                 break;
               default:
-                link = null; // Fallback
+                link = null;
             }
-
-            _showAppbarActionsDropdownMenu(buttonTitle, link!);
+            if (link != null) {
+              _showAppbarActionsDropdownMenu(buttonTitle, link);
+            }
           },
           onMenuButtonPressed: (buttonTitle) {
             print("'$buttonTitle' selezionato");
           },
-                  // Passaggio dei LayerLinks specifici per ciascun pulsante
-        clientiLayerLink: _clientiLayerLink,
-        fornitoriLayerLink: _fornitoriLayerLink,
-        contabilitaLayerLink: _contabilitaLayerLink,
-        rendicontazioneLayerLink: _rendicontazioneLayerLink,
-        configurazioneLayerLink: _configurazioneLayerLink,
+          clientiLayerLink: _clientiLayerLink,
+          fornitoriLayerLink: _fornitoriLayerLink,
+          contabilitaLayerLink: _contabilitaLayerLink,
+          rendicontazioneLayerLink: _rendicontazioneLayerLink,
+          configurazioneLayerLink: _configurazioneLayerLink,
+
+          // -------------------- PASSIAMO I PARAMETRI DI PAGINAZIONE --------------------
+          currentPage: currentPage,
+          totalItems: totalItems,
+          pageSize: pageSize,
+          onPageChanged: (newPage) {
+            // Quando l'utente clicca sulle frecce, aggiorniamo la pagina
+            setState(() {
+              currentPage = newPage;
+            });
+          },
         ),
       ),
       body: GestureDetector(
         onTap: () {
-          // Chiude i menu se sono aperti
+          // Chiude eventuali menu Overlay se l'utente fa tap altrove
           if (_searchMenuOverlay != null) _closeSearchMenu();
           if (_actionsMenuOverlay != null) _closeDropdownMenu();
         },
         child: Stack(
           children: [
-            Center(
-              child: Builder(
+            //Center(
+              //child: 
+              Builder(
                 builder: (context) {
-                  // Controllo del widget da mostrare in base alla vista selezionata
                   switch (selectedViewIndex) {
                     case 0: // Elenco
-                      return buildListPlaceholder();
+                      return buildListPlaceholder(
+                        collectionName: "products",
+                        // Usiamo i nostri parametri di stato (reactive)
+                        initialPageSize: pageSize,
+                        initialPageNumber: currentPage,
+                        onTotalCountChanged: (total) {
+                          // Aggiorniamo il valore totale in modo che si rifletta in AppBar
+                          setState(() {
+                            totalItems = total;
+                          });
+                          print("Totale pagamenti: $total");
+                        },
+                      );
+
                     case 1: // Kanban
-                      return buildKanbanPlaceholder();
+                      return Center(child: buildKanbanPlaceholder());
+
                     case 2: // Attività
-                      return buildActivityPlaceholder();
+                      return Center(child: buildActivityPlaceholder());
+
                     default:
                       return const Text("Errore: Vista non trovata");
                   }
                 },
               ),
-            ),
+            //),
           ],
         ),
       ),

@@ -4,7 +4,8 @@ import 'package:flutter_app/document_manager/documents_utils.dart';
 import 'package:flutter_app/document_manager/file_manager_service.dart';
 import 'package:flutter_app/esg_data_manager/euroistat.dart';
 import 'package:flutter_app/esg_data_manager/yahoo_finance.dart';
-import 'package:flutter_app/pages/accounting/accounting.dart';
+import 'package:flutter_app/pages/accounting/accounting_records.dart';
+import 'package:flutter_app/pages/accounting/invoice_view.dart';
 import 'package:flutter_app/pages/calendar/calendar.dart';
 import 'package:flutter_app/pages/contacts/contacts.dart';
 import 'package:flutter_app/pages/generic_object_page/generic_object_page.dart';
@@ -231,7 +232,7 @@ class WorkspaceBody extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => AccountingPage(),
+                        builder: (context) => InvoiceViewPage(),
                       ),
                     );
                   },

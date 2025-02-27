@@ -2,47 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/accounting/components/appbar_actions_menu.dart';
 
 class CustomAppBar extends StatelessWidget {
-  final LayerLink searchLayerLink;
-  final FocusNode searchFocusNode;
-  final OverlayEntry? searchMenuOverlay;
-  final VoidCallback showOverlayMenu;
-  final VoidCallback closeOverlayMenu;
-  final int selectedViewIndex;
-  final Function(int) onViewChanged;
   // Funzione per mostrare il menu a tendina
   final Function(String) onDropDownMenuButtonPressed;
   final Function(String) onMenuButtonPressed;
 
-  // LayerLinks per ogni pulsante
+  // LayerLinks per ogni pulsante del menu (se ancora utilizzati altrove)
   final LayerLink clientiLayerLink;
   final LayerLink fornitoriLayerLink;
   final LayerLink contabilitaLayerLink;
   final LayerLink rendicontazioneLayerLink;
   final LayerLink configurazioneLayerLink;
 
+  // Callback per il pulsante "Nuova"
+  final VoidCallback onNuovoPressed;
+
+  // Due stringhe da sostituire a "Fatture" e "Fattura in bozza"
+  final String label1;
+  final String label2;
+
   const CustomAppBar({
     Key? key,
-    required this.searchLayerLink,
-    required this.searchFocusNode,
-    required this.searchMenuOverlay,
-    required this.showOverlayMenu,
-    required this.closeOverlayMenu,
-    required this.selectedViewIndex,
-    required this.onViewChanged,
     required this.onDropDownMenuButtonPressed,
-        required this.onMenuButtonPressed,
+    required this.onMenuButtonPressed,
     required this.clientiLayerLink,
     required this.fornitoriLayerLink,
     required this.contabilitaLayerLink,
     required this.rendicontazioneLayerLink,
     required this.configurazioneLayerLink,
+    required this.onNuovoPressed,
+    required this.label1,
+    required this.label2,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Prima barra superiore
+        // ------------------------------------------------
+        // PRIMA BARRA SUPERIORE (AppBar principale)
+        // ------------------------------------------------
         AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -50,10 +48,10 @@ class CustomAppBar extends StatelessWidget {
             children: [
               // Icona principale
               const Icon(
-                Icons.insert_chart, // Puoi cambiare con un'icona personalizzata
+                Icons.insert_chart, // Puoi sostituire con un'icona personalizzata
                 color: Color(0xFF6B3A5B),
               ),
-              const SizedBox(width: 8), // Spazio tra icona e titolo
+              const SizedBox(width: 8),
               const Text(
                 "Contabilità",
                 style: TextStyle(
@@ -62,7 +60,7 @@ class CustomAppBar extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 24), // Spazio prima delle azioni
+              const SizedBox(width: 24),
               // Azioni accanto al titolo
               _buildActionButton("Bacheca", context),
               _buildActionButtonWithMenu("Clienti", context, clientiLayerLink),
@@ -75,8 +73,7 @@ class CustomAppBar extends StatelessWidget {
           actions: [
             // Simbolo notifiche
             Padding(
-              padding: const EdgeInsets.only(
-                  right: 16), // Padding tra notifiche e attività
+              padding: const EdgeInsets.only(right: 16),
               child: Stack(
                 children: [
                   IconButton(
@@ -90,7 +87,7 @@ class CustomAppBar extends StatelessWidget {
                     top: 8,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
@@ -108,8 +105,7 @@ class CustomAppBar extends StatelessWidget {
             ),
             // Simbolo attività
             Padding(
-              padding: const EdgeInsets.only(
-                  right: 16), // Padding tra attività e avatar
+              padding: const EdgeInsets.only(right: 16),
               child: IconButton(
                 icon: const Icon(Icons.local_activity, color: Colors.black),
                 onPressed: () {
@@ -119,7 +115,7 @@ class CustomAppBar extends StatelessWidget {
             ),
             // Avatar utente
             const Padding(
-              padding: EdgeInsets.only(right: 16), // Padding tra avatar e bordo
+              padding: EdgeInsets.only(right: 16),
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.teal,
@@ -131,258 +127,121 @@ class CustomAppBar extends StatelessWidget {
             ),
           ],
         ),
-        // Seconda barra sotto il titolo
+
+        // ------------------------------------------------
+        // SECONDA BARRA (parte inferiore personalizzata)
+        // ------------------------------------------------
         Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             border: Border(
               bottom: BorderSide(
-                color: Colors.grey, // Colore del bordo inferiore
-                width: 1.0, // Spessore del bordo inferiore
+                color: Colors.grey,
+                width: 1.0,
               ),
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: Row(
             children: [
-              // Pulsante "Nuovo" con stile personalizzato
-              TextButton(
-                onPressed: () {
-                  print("Nuovo cliccato");
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF6B3A5B), // Colore viola scuro
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(4), // Angoli arrotondati
-                  ),
-                  padding:
+              // Pulsante "Nuova" con effetto hover
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: TextButton(
+                  onPressed: onNuovoPressed,
+                  style: ButtonStyle(
+                    // Sfondo trasparente di default, viola scuro in hover
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (states) {
+                        if (states.contains(MaterialState.hovered)) {
+                          return const Color(0xFF6B3A5B);
+                        }
+                        return Colors.transparent;
+                      },
+                    ),
+                    // Testo viola di default, bianco in hover
+                    foregroundColor: MaterialStateProperty.resolveWith<Color>(
+                      (states) {
+                        if (states.contains(MaterialState.hovered)) {
+                          return Colors.white;
+                        }
+                        return const Color(0xFF6B3A5B);
+                      },
+                    ),
+                    // Bordo viola
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: const BorderSide(color: Color(0xFF6B3A5B)),
+                      ),
+                    ),
+                    padding: MaterialStateProperty.all(
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                child: const Text(
-                  "Nuovo",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Pulsante "Carica" con stile personalizzato
-              TextButton(
-                onPressed: () {
-                  print("Carica cliccato");
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFFEAEAEA), // Colore grigio chiaro
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(4), // Angoli arrotondati
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                child: const Text(
-                  "Carica",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16), // Spaziatura tra pulsanti e titolo
-              // Titolo sezione con rotellina
-              Row(
-                children: [
-                  const Text(
-                    "Titolo Sezione", // Titolo accanto ai pulsanti
+                  child: const Text(
+                    "Nuova",
                     style: TextStyle(
-                      color: Colors.black,
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {
-                      print("Rotellina cliccata");
-                    },
-                    icon: const Icon(
-                      Icons.settings, // Icona rotellina
-                      color: Colors.black,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                  width:
-                      75), // Barra di ricerca centrata orizzontalmente con larghezza massima
-              Spacer(),
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                      maxWidth: 600), // Larghezza massima di 600
-                  child: CompositedTransformTarget(
-                    link: searchLayerLink, // Collega la barra di ricerca al menu
-                    child: Container(
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            4), // Angoli arrotondati a 4 gradi
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: TextField(
-                        focusNode: searchFocusNode,
-                        textAlignVertical: TextAlignVertical.center,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.search, color: Colors.black),
-                          contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                          hintText: "Ricerca...",
-                          border: InputBorder.none,
-                        ),
-                        onTap: () {
-                          if (searchMenuOverlay == null) {
-                            showOverlayMenu(); // Mostra il menu in sovrapposizione
-                          }
-                        },
-                      ),
-                    ),
-                  ),
                 ),
               ),
-              Spacer(), // Spaziatore per mantenere gli elementi distribuiti
-              // Pulsanti vista (es. lista, griglia, attività) ancorati al lato destro
-              // Sezione elementi mostrati con frecce e pulsanti vista
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Testo con indice degli elementi
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      "1-10 / 100", // Aggiorna dinamicamente se necessario
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  // Freccia sinistra
-                  TextButton(
-                    onPressed: () {
-                      print("Freccia sinistra cliccata");
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFFEAEAEA), // Stile pulsante grigio
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                    child: const Icon(Icons.chevron_left,
-                        color: Colors.black, size: 20),
-                  ),
-                  const SizedBox(width: 2),
-                  // Freccia destra
-                  TextButton(
-                    onPressed: () {
-                      print("Freccia destra cliccata");
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFFEAEAEA), // Stile pulsante grigio
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                    child: const Icon(Icons.chevron_right,
-                        color: Colors.black, size: 20),
-                  ),
-                  const SizedBox(
-                      width: 16), // Spaziatura tra frecce e pulsanti vista
-                  // Pulsanti vista (Elenco, Kanban, Attività)
-                  Tooltip(
-                    message: "Elenco",
-                    child: TextButton(
-                      onPressed: () {
-                        onViewChanged(0); // Aggiorna la vista selezionata
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: selectedViewIndex == 0
-                            ? const Color(0xFFDFF3F2)
-                            : const Color(0xFFEAEAEA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                      child: Icon(
-                        Icons.list,
-                        color:
-                            selectedViewIndex == 0 ? Colors.teal : Colors.black,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Tooltip(
-                    message: "Kanban",
-                    child: TextButton(
-                      onPressed: () {
-                        onViewChanged(1); // Aggiorna la vista selezionata
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: selectedViewIndex == 1
-                            ? const Color(0xFFDFF3F2)
-                            : const Color(0xFFEAEAEA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                      child: Icon(
-                        Icons.view_kanban,
-                        color:
-                            selectedViewIndex == 1 ? Colors.teal : Colors.black,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Tooltip(
-                    message: "Attività",
-                    child: TextButton(
-                      onPressed: () {
-                        onViewChanged(2); // Aggiorna la vista selezionata
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: selectedViewIndex == 2
-                            ? const Color(0xFFDFF3F2)
-                            : const Color(0xFFEAEAEA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                      ),
-                      child: Icon(
-                        Icons.local_activity,
-                        color:
-                            selectedViewIndex == 2 ? Colors.teal : Colors.black,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
+
+              const SizedBox(width: 8),
+
+              // Due etichette personalizzabili (ex: "Fatture" / "Fattura in bozza")
+              Text(
+                label1,
+                style: const TextStyle(
+                  color: Colors.teal,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label2,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              // Tre icone (rotellina, upload cloud, chiusura)
+              IconButton(
+                onPressed: () {
+                  print("Rotellina cliccata");
+                },
+                icon: const Icon(
+                  Icons.settings,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  print("Cloud upload cliccato");
+                },
+                icon: const Icon(
+                  Icons.cloud_upload,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  print("Eliminazione modifiche cliccata");
+                },
+                icon: const Icon(
+                  Icons.close,
+                  color: Colors.black,
+                  size: 20,
+                ),
               ),
             ],
           ),
@@ -391,6 +250,9 @@ class CustomAppBar extends StatelessWidget {
     );
   }
 
+  // ----------------------------------------------------------------------
+  // Pulsante con menu a tendina (Clienti, Fornitori, Contabilità, ecc.)
+  // ----------------------------------------------------------------------
   Widget _buildActionButtonWithMenu(
       String title, BuildContext context, LayerLink link) {
     return CompositedTransformTarget(
@@ -416,85 +278,39 @@ class CustomAppBar extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(
-      String title, BuildContext context) {
+  // ----------------------------------------------------------------------
+  // Pulsante semplice (Bacheca, ecc.)
+  // ----------------------------------------------------------------------
+  Widget _buildActionButton(String title, BuildContext context) {
     return TextButton(
-        onPressed: () {
-          // Mostra il menu a tendina per il pulsante selezionato
-          onMenuButtonPressed(title);
-        },
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
+      onPressed: () {
+        onMenuButtonPressed(title);
+      },
+      style: TextButton.styleFrom(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
         ),
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-  }
-}
-
-class SearchBarWithOverlay extends StatelessWidget {
-  final LayerLink layerLink;
-  final FocusNode searchFocusNode;
-  final OverlayEntry? overlayEntry;
-  final VoidCallback showOverlayMenu;
-  final VoidCallback closeOverlayMenu;
-
-  const SearchBarWithOverlay({
-    Key? key,
-    required this.layerLink,
-    required this.searchFocusNode,
-    required this.overlayEntry,
-    required this.showOverlayMenu,
-    required this.closeOverlayMenu,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 600),
-      child: CompositedTransformTarget(
-        link: layerLink,
-        child: Container(
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: TextField(
-            focusNode: searchFocusNode,
-            textAlignVertical: TextAlignVertical.center,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search, color: Colors.black),
-              contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-              hintText: "Ricerca...",
-              border: InputBorder.none,
-            ),
-            onTap: () {
-              if (overlayEntry == null) {
-                showOverlayMenu();
-              }
-            },
-          ),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 }
 
+// ----------------------------------------------------------------------
+// Se serve ancora gestire i menu a tendina, la funzione di utilità
+// rimane disponibile; in caso non serva, puoi rimuoverla.
+// ----------------------------------------------------------------------
 OverlayEntry createDropdownMenu({
   required BuildContext context,
   required LayerLink link,
   required VoidCallback onClose,
-  required AppbarActionsMenu content, // Accetta lista di widget
+  required AppbarActionsMenu content,
 }) {
   return OverlayEntry(
     builder: (context) {
